@@ -1,0 +1,24 @@
+{
+  "name": "backend-reservas",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "Rudolf Felipez Mancilla",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon --watch app --watch config --ignore node_modules --ignore public server.js",
+    "start": "nodemon server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "fs": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "nodemon": "^3.1.10",
+    "pg": "^8.16.3"
+  }
+}
