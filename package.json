@@ -7,7 +7,7 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --watch app --watch config --ignore node_modules --ignore public server.js",
+    "dev": "nodemon server.js",
     "start": "nodemon server.js"
   },
   "dependencies": {
