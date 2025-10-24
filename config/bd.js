@@ -9,14 +9,8 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-const connect = async () => {
-  try {
-    const result = await pool.query("SELECT NOW()");
-    console.log("🟢 Conexión a la base de datos exitosa:", result.rows[0].now);
-  } catch (error) {
-    console.error("❌ Error al conectar con la base de datos:", error);
-    throw error;
-  }
+// Exportamos funciones útiles
+module.exports = {
+  query: (text, params) => pool.query(text, params),  // ahora db.query() funciona
+  connect: () => pool.connect()                        // para transacciones si quieres
 };
-
-module.exports = { pool, connect };

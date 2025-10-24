@@ -36,8 +36,8 @@ const modifyRoom = async (req, res) => {
 }
  
 const getRooms = async (req, res) => {
-  try {
-    const Rooms = await HabitacionModel.getRoomsModels()
+  try {    
+    const Rooms = await HabitacionModel.getRoomsModel()
     if(!Rooms){
       return res.status(404).json({ message: 'No se encontro ninguna Habitacion'})
     }
@@ -47,8 +47,22 @@ const getRooms = async (req, res) => {
   }
 }
 
+const getRoomById = async (req, res) => {
+  try {
+    const id_habitacion = req.params.id_habitacion
+    const Room = await HabitacionModel.getRoomByIdModel(id_habitacion)
+    if(!Room){
+      return res.status(404).json({ message: 'No se encontro ninguna Habitacion'})
+    }
+    res.status(201).send({ data: Room})
+  } catch (error) {
+    httpError(res, error)
+  }
+}
+
 module.exports = {
   saveRoom,
   modifyRoom, 
   getRooms,
+  getRoomById
 }

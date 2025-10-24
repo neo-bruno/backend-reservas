@@ -1,7 +1,7 @@
 const bd = require('../../config/bd')
 
 const saveBusinessModel = async (negocio) => {
-  const client = await db.connect()
+  const client = await bd.connect()
   try {
     await client.query('BEGIN')
 
@@ -31,11 +31,11 @@ const getBusinessModel = async (tipo_negocio) => {
   try {
     const query = {
       text: `
-      
+      select * from negocio where tipo_negocio = $1     
     `,
-      values: []
+      values: [tipo_negocio]
     }
-    const { rows } = await db.query(query)
+    const { rows } = await bd.query(query)
     return rows
   } catch (error) {
     throw error

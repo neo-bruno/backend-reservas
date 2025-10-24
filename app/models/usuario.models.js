@@ -45,7 +45,6 @@ const findByCellphone = async (telefono_usuario) => {
   }
 }
 
-
 const getUser = async (id_persona) => {
 
   const query = {

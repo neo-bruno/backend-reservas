@@ -46,18 +46,20 @@ const register = async (req, res) => {
     }
     
     const user = await UserModel.findByCellphone(usuario.telefono_usuario)
-    if (user.telefono_usuario) {
+    if (user.id_usuario > 0) {
       return res.status(409).json({ estado: false, mensaje: 'El numero Celular ya Existe!' })
     }
 
-    const hashedPassword = await encrypt(contrasena_usuario)
+    const fecha_creacion_usuario = new Date().toISOString(); // fecha y hora actual
+
+    const hashedPassword = await encrypt(usuario.contrasena_usuario)
     const registerUser = await UserModel.createUser({      
-      rol_usuario,
-      nombre_usuario,
-      telefono_usuario,
-      codigo_pais_usuario,
+      rol_usuario: usuario.rol_usuario,
+      nombre_usuario: usuario.nombre_usuario,
+      telefono_usuario: usuario.telefono_usuario,
+      codigo_pais_usuario: usuario.codigo_pais_usuario,
       contrasena_usuario: hashedPassword,
-      verificado_usuario,
+      verificado_usuario: true,
       fecha_creacion_usuario      
     })
     const tokenSession = await tokenSign(registerUser)
