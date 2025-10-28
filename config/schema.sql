@@ -4,126 +4,197 @@
 /* Created on: 20/10/2025                                       */
 /*==============================================================*/
 
--- ==============================================================
--- Tabla: USUARIO
--- ==============================================================
-create table USUARIO (
-   ID_USUARIO SERIAL primary key,
-   ROL_USUARIO VARCHAR(50) not null,                -- 'admin', 'cliente', etc.
-   NOMBRE_USUARIO VARCHAR(250) not null,
-   TELEFONO_USUARIO VARCHAR(20) not null unique,    -- identificador principal
-   CODIGO_PAIS_USUARIO VARCHAR(10) not null,                -- ej: +591
-   CONTRASENA_USUARIO VARCHAR(200) not null,        -- hash con bcrypt
-   VERIFICADO_USUARIO BOOLEAN default false,
-   FECHA_CREACION_USUARIO TIMESTAMP default now()
+/*==============================================================*/
+/*      SISTEMA DE RESERVAS MULTI-NEGOCIOS                     */
+/*      Autenticación por WhatsApp (Teléfono)                  */
+/*      Base de datos: PostgreSQL                              */
+/*      Fecha: 25/10/2025                                      */
+/*==============================================================*/
+
+-- Limpieza previa (solo usar en entorno de desarrollo)
+DROP TABLE IF EXISTS usuario_negocio, usuario, rol, persona, reserva, pago,
+resena, restriccion, habitacion_servicio, habitacion, servicio,
+imagen, negocio, estado CASCADE;
+
+-------------------------------------------------------------
+-- TABLA ESTADO
+-------------------------------------------------------------
+CREATE TABLE estado (
+    id_estado SERIAL PRIMARY KEY,
+    tipo_estado INT NOT NULL,
+    nombre_estado VARCHAR(250)
 );
 
-create unique index USUARIO_TELEFONO_UK on USUARIO (TELEFONO_USUARIO);
-
-
--- ==============================================================
--- Tabla: NEGOCIO
--- ==============================================================
-create table NEGOCIO (
-   ID_NEGOCIO SERIAL primary key,
-   TIPO_NEGOCIO VARCHAR(50) not null,               -- 'hotel', 'peluqueria', 'spa', etc.
-   NOMBRE_NEGOCIO VARCHAR(250) not null,
-   UBICACION_NEGOCIO TEXT not null,
-   DESCRIPCION_NEGOCIO TEXT,
-   TELEFONO_NEGOCIO VARCHAR(100),
-   ESTADO_NEGOCIO INT default 1,                    -- 1 = activo, 0 = inactivo
-   FECHA_CREACION TIMESTAMP default now()
+-------------------------------------------------------------
+-- TABLA ROL
+-------------------------------------------------------------
+CREATE TABLE rol (
+    id_rol SERIAL PRIMARY KEY,
+    nombre_rol VARCHAR(250) NOT NULL
 );
 
-
--- ==============================================================
--- Tabla: HABITACION
--- ==============================================================
-create table HABITACION (
-   ID_HABITACION SERIAL primary key,
-   ID_NEGOCIO INT not null references NEGOCIO(ID_NEGOCIO) on delete cascade,
-   TIPO_HABITACION VARCHAR(50) not null,
-   NUMERO_HABITACION VARCHAR(100) not null,
-   NOMBRE_HABITACION VARCHAR(250) not null,
-   DESCRIPCION_HABITACION TEXT,
-   CAPACIDAD_HABITACION INT default 1,
-   PRECIO_HABITACION NUMERIC(10,2) not null,
-   ESTADO_HABITACION INT default 1,                 -- 1 = activa, 0 = fuera de servicio
-   FECHA_CREACION_HABITACION TIMESTAMP default now()
+-------------------------------------------------------------
+-- TABLA PERSONA
+-------------------------------------------------------------
+CREATE TABLE persona (
+    id_persona SERIAL PRIMARY KEY,
+    nombre_persona VARCHAR(250) NOT NULL,
+    documento_persona VARCHAR(50),
+    expedicion_persona VARCHAR(10),
+    fecha_nacimiento DATE,
+    nit_persona VARCHAR(50),
+    razon_social_persona VARCHAR(250),
+    telefono_persona VARCHAR(30) NOT NULL,
+    tipo_persona INT,
+    fecha_creacion_persona TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-create index HABITACION_NEGOCIO_FK on HABITACION (ID_NEGOCIO);
-
-
--- ==============================================================
--- Tabla: DISPONIBLE
--- ==============================================================
-create table DISPONIBLE (
-   ID_DISPONIBLE SERIAL primary key,
-   ID_HABITACION INT not null references HABITACION(ID_HABITACION) on delete cascade,
-   FECHA_INICIAL_DISPONIBLE DATE not null,
-   HORA_INICIAL_DISPONIBLE TIME not null,
-   FECHA_FINAL_DISPONIBLE DATE not null,
-   HORA_FINAL_DISPONIBLE TIME not null,
-   ESTADO_DISPONIBLE BOOLEAN default true,
-   FUENTE_DISPONIBLE VARCHAR(50) default 'manual',
-   FECHA_CREACION_DISPONIBLE TIMESTAMP default now()
+-------------------------------------------------------------
+-- TABLA USUARIO (Autenticación por teléfono/WhatsApp)
+-------------------------------------------------------------
+CREATE TABLE usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    id_rol INT NOT NULL REFERENCES rol(id_rol) ON UPDATE CASCADE ON DELETE RESTRICT,
+    id_persona INT REFERENCES persona(id_persona) ON UPDATE CASCADE ON DELETE SET NULL,
+    nombre_usuario VARCHAR(250) NOT NULL,
+    telefono_usuario VARCHAR(20) NOT NULL UNIQUE, -- login principal
+    codigo_pais_usuario VARCHAR(10) NOT NULL,    
+    contrasena_usuario VARCHAR(200) NOT NULL,
+    verificado_usuario BOOLEAN DEFAULT FALSE, -- se activa tras verificación WhatsApp
+    fecha_creacion_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-create index DISPONIBLE_HABITACION_FK on DISPONIBLE (ID_HABITACION);
-create index DISPONIBLE_FECHA_IDX on DISPONIBLE (FECHA_INICIAL_DISPONIBLE, FECHA_FINAL_DISPONIBLE);
-
-
--- ==============================================================
--- Tabla: RESERVA
--- ==============================================================
-create table RESERVA (
-   ID_RESERVA SERIAL primary key,
-   ID_USUARIO INT not null references USUARIO(ID_USUARIO) on delete cascade,
-   ID_HABITACION INT not null references HABITACION(ID_HABITACION) on delete cascade,
-   CODIGO_RESERVA VARCHAR(250) not null unique,
-   CHECK_IN_RESERVA TIMESTAMP not null,
-   CHECK_OUT_RESERVA TIMESTAMP not null,
-   HORA_LLEGADA_RESERVA TIME null,
-   MONTO_TOTAL_RESERVA NUMERIC(10,2),
-   ESTADO_RESERVA VARCHAR(50) not null default 'pendiente',  -- pendiente, confirmada, cancelada
-   FECHA_CREACION_RESERVA TIMESTAMP default now()
+-------------------------------------------------------------
+-- TABLA NEGOCIO
+-------------------------------------------------------------
+CREATE TABLE negocio (
+    id_negocio SERIAL PRIMARY KEY,
+    id_estado INT NOT NULL REFERENCES estado(id_estado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    tipo_negocio INT NOT NULL,
+    nombre_negocio VARCHAR(250) NOT NULL,
+    ubicacion_negocio TEXT NOT NULL,
+    descripcion_negocio TEXT NOT NULL,
+    telefono_negocio VARCHAR(20) NOT NULL,
+    fecha_creacion_negocio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-create index RESERVA_USUARIO_FK on RESERVA (ID_USUARIO);
-create index RESERVA_HABITACION_FK on RESERVA (ID_HABITACION);
-create index RESERVA_FECHA_IDX on RESERVA (CHECK_IN_RESERVA, CHECK_OUT_RESERVA);
-
-
--- ==============================================================
--- Tabla: USUARIO_NEGOCIO (para admins o empleados de un negocio)
--- ==============================================================
-create table USUARIO_NEGOCIO (
-   ID_USUARIO_NEGOCIO SERIAL primary key,
-   ID_USUARIO INT not null references USUARIO(ID_USUARIO) on delete cascade,
-   ID_NEGOCIO INT not null references NEGOCIO(ID_NEGOCIO) on delete cascade,
-   ROL_NEGOCIO VARCHAR(50) default 'admin',
-   FECHA_CREACION TIMESTAMP default now(),
-   unique (ID_USUARIO, ID_NEGOCIO)
+-------------------------------------------------------------
+-- TABLA USUARIO_NEGOCIO
+-------------------------------------------------------------
+CREATE TABLE usuario_negocio (
+    id_usuario_negocio SERIAL PRIMARY KEY,
+    id_negocio INT NOT NULL REFERENCES negocio(id_negocio) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_usuario INT NOT NULL REFERENCES usuario(id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    rol_usuario_negocio VARCHAR(250) NOT NULL
 );
 
-create index USUARIO_NEGOCIO_FK1 on USUARIO_NEGOCIO (ID_USUARIO);
-create index USUARIO_NEGOCIO_FK2 on USUARIO_NEGOCIO (ID_NEGOCIO);
-
-
--- ==============================================================
--- Tabla: CODIGO_VERIFICACION (para OTP / recuperación por WhatsApp)
--- ==============================================================
-create table CODIGO_VERIFICACION (
-   ID_CODIGO SERIAL primary key,
-   ID_USUARIO INT not null references USUARIO(ID_USUARIO) on delete cascade,
-   CODIGO VARCHAR(10) not null,
-   FECHA_EXPIRACION TIMESTAMP not null,
-   USADO BOOLEAN default false,
-   FECHA_CREACION TIMESTAMP default now()
+-------------------------------------------------------------
+-- TABLA SERVICIO
+-------------------------------------------------------------
+CREATE TABLE servicio (
+    id_servicio SERIAL PRIMARY KEY,
+    nombre_servicio VARCHAR(250) NOT NULL,
+    icono_servicio VARCHAR(100)
 );
 
-create index CODIGO_VERIFICACION_USUARIO_FK on CODIGO_VERIFICACION (ID_USUARIO);
+-------------------------------------------------------------
+-- TABLA HABITACION
+-------------------------------------------------------------
+CREATE TABLE habitacion (
+    id_habitacion SERIAL PRIMARY KEY,
+    id_negocio INT NOT NULL REFERENCES negocio(id_negocio) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_estado INT NOT NULL REFERENCES estado(id_estado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    tipo_habitacion INT NOT NULL,
+    numero_habitacion VARCHAR(100) NOT NULL,
+    nombre_habitacion VARCHAR(250) NOT NULL,
+    precio_habitacion NUMERIC(8,2) NOT NULL,
+    descripcion_habitacion TEXT NOT NULL,
+    capacidad_habitacion INT DEFAULT 1,
+    fecha_creacion_habitacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------
+-- TABLA HABITACION_SERVICIO
+-------------------------------------------------------------
+CREATE TABLE habitacion_servicio (
+    id_hab_servicio SERIAL PRIMARY KEY,
+    id_habitacion INT NOT NULL REFERENCES habitacion(id_habitacion) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_servicio INT NOT NULL REFERENCES servicio(id_servicio) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+-------------------------------------------------------------
+-- TABLA IMAGEN
+-------------------------------------------------------------
+CREATE TABLE imagen (
+    id_imagen SERIAL PRIMARY KEY,
+    id_habitacion INT REFERENCES habitacion(id_habitacion) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_negocio INT REFERENCES negocio(id_negocio) ON UPDATE CASCADE ON DELETE CASCADE,
+    url_imagen TEXT NOT NULL,
+    descripcion_imagen TEXT,
+    fecha_creacion_imagen TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------
+-- TABLA RESTRICCION (fechas NO disponibles)
+-------------------------------------------------------------
+CREATE TABLE restriccion (
+    id_restriccion SERIAL PRIMARY KEY,
+    id_habitacion INT NOT NULL REFERENCES habitacion(id_habitacion) ON UPDATE CASCADE ON DELETE CASCADE,
+    fecha_inicial_restriccion DATE NOT NULL,
+    hora_inicial_restriccion TIME NOT NULL,
+    fecha_final_restriccion DATE NOT NULL,
+    hora_final_restriccion TIME NOT NULL,
+    motivo_restriccion TEXT,
+    estado_restriccion INT,
+    fecha_creacion_restriccion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------
+-- TABLA RESERVA
+-------------------------------------------------------------
+CREATE TABLE reserva (
+    id_reserva SERIAL PRIMARY KEY,
+    id_estado INT NOT NULL REFERENCES estado(id_estado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    id_usuario INT NOT NULL REFERENCES usuario(id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_habitacion INT NOT NULL REFERENCES habitacion(id_habitacion) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_restriccion INT REFERENCES restriccion(id_restriccion) ON UPDATE CASCADE ON DELETE SET NULL,
+    id_persona INT NOT NULL REFERENCES persona(id_persona) ON UPDATE CASCADE ON DELETE RESTRICT,
+    codigo_reserva VARCHAR(250) NOT NULL UNIQUE,
+    check_in_reserva DATE NOT NULL,
+    check_out_reserva DATE NOT NULL,
+    hora_llegada_reserva TIME,
+    monto_total_reserva NUMERIC(10,2),
+    observacion_reserva TEXT,
+    fecha_creacion_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------
+-- TABLA PAGO
+-------------------------------------------------------------
+CREATE TABLE pago (
+    id_pago SERIAL PRIMARY KEY,
+    id_reserva INT NOT NULL REFERENCES reserva(id_reserva) ON UPDATE CASCADE ON DELETE CASCADE,
+    monto_pago NUMERIC(8,2) NOT NULL,
+    tipo_pago INT NOT NULL,
+    metodo_pago INT NOT NULL,
+    comision_pago NUMERIC(8,2),
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    estado_pago INT NOT NULL,
+    fecha_creacion_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-------------------------------------------------------------
+-- TABLA RESENA
+-------------------------------------------------------------
+CREATE TABLE resena (
+    id_resena SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL REFERENCES usuario(id_usuario) ON UPDATE CASCADE ON DELETE CASCADE,
+    id_reserva INT NOT NULL REFERENCES reserva(id_reserva) ON UPDATE CASCADE ON DELETE CASCADE,
+    puntuacion_resena INT,
+    comentario_resena TEXT,
+    fecha_creacion_resena TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 
 /*==============================================================*/
 /* Eliminar: Detiene los usuario de la bd_fenix                 */

@@ -50,17 +50,14 @@ const register = async (req, res) => {
       return res.status(409).json({ estado: false, mensaje: 'El numero Celular ya Existe!' })
     }
 
-    const fecha_creacion_usuario = new Date().toISOString(); // fecha y hora actual
-
     const hashedPassword = await encrypt(usuario.contrasena_usuario)
     const registerUser = await UserModel.createUser({      
-      rol_usuario: usuario.rol_usuario,
+      id_rol: usuario.id_rol,
       nombre_usuario: usuario.nombre_usuario,
       telefono_usuario: usuario.telefono_usuario,
       codigo_pais_usuario: usuario.codigo_pais_usuario,
       contrasena_usuario: hashedPassword,
-      verificado_usuario: true,
-      fecha_creacion_usuario      
+      verificado_usuario: true    
     })
     const tokenSession = await tokenSign(registerUser)
 
