@@ -20,9 +20,10 @@ imagen, negocio, estado CASCADE;
 -- TABLA ESTADO
 -------------------------------------------------------------
 CREATE TABLE estado (
-    id_estado SERIAL PRIMARY KEY,
-    tipo_estado INT NOT NULL,
-    nombre_estado VARCHAR(250)
+  id_estado SERIAL PRIMARY KEY,
+  nombre_estado VARCHAR(50) NOT NULL,
+  descripcion_estado TEXT,
+  tipo_estado VARCHAR(50) NOT NULL
 );
 
 -------------------------------------------------------------
@@ -194,6 +195,57 @@ CREATE TABLE resena (
     comentario_resena TEXT,
     fecha_creacion_resena TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+/*==============================================================*/
+/* Insertar: Datos a la tabla Rol pre-definidos                 */
+/*==============================================================*/
+INSERT INTO public.rol(
+	nombre_rol)
+	VALUES ('Admin');
+	
+INSERT INTO public.rol(
+	nombre_rol)
+	VALUES ('Cliente');
+/*==============================================================*/
+
+
+/*==============================================================*/
+/* Insertar: Datos a la tabla Estado pre-definidos                 */
+/*==============================================================*/
+-- 🔹 ESTADOS DE HABITACIÓN
+INSERT INTO estado (nombre_estado, descripcion_estado, tipo_estado) VALUES
+('disponible', 'Habitación lista para recibir huéspedes.', 'habitacion'),
+('ocupada', 'Habitación actualmente con huéspedes.', 'habitacion'),
+('en limpieza', 'Habitación en proceso de limpieza o mantenimiento.', 'habitacion'),
+('fuera de servicio', 'Habitación no disponible por reparación u otra causa.', 'habitacion');
+
+-- 🔹 ESTADOS DE RESERVA
+INSERT INTO estado (nombre_estado, descripcion_estado, tipo_estado) VALUES
+('pendiente', 'Reserva creada pero aún no pagada o confirmada.', 'reserva'),
+('confirmada', 'Reserva confirmada y pagada.', 'reserva'),
+('cancelada', 'Reserva cancelada por el cliente o el administrador.', 'reserva'),
+('completada', 'Reserva finalizada exitosamente.', 'reserva'),
+('no show', 'El huésped no se presentó en la fecha indicada.', 'reserva');
+
+-- 🔹 ESTADOS DE RESTRICCIÓN
+INSERT INTO estado (nombre_estado, descripcion_estado, tipo_estado) VALUES
+('activa', 'Rango de fechas restringido actualmente.', 'restriccion'),
+('expirada', 'Rango de restricción que ya ha terminado.', 'restriccion');
+
+-- 🔹 ESTADOS DE USUARIO
+INSERT INTO estado (nombre_estado, descripcion_estado, tipo_estado) VALUES
+('activo', 'Usuario con acceso y permisos vigentes en el sistema.', 'usuario'),
+('inactivo', 'Usuario deshabilitado temporalmente.', 'usuario'),
+('verificado', 'Usuario con número telefónico validado por WhatsApp.', 'usuario');
+
+-- 🔹 ESTADOS DE NEGOCIO
+INSERT INTO estado (nombre_estado, descripcion_estado, tipo_estado) VALUES
+('activo', 'Negocio en funcionamiento y visible para los usuarios.', 'negocio'),
+('inactivo', 'Negocio temporalmente deshabilitado por el administrador.', 'negocio'),
+('en revisión', 'Negocio pendiente de verificación o aprobación.', 'negocio'),
+('bloqueado', 'Negocio bloqueado por incumplir políticas del sistema.', 'negocio');
+
+/*=============================================================================*/
 
 
 /*==============================================================*/

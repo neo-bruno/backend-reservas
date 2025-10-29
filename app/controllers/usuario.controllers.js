@@ -8,7 +8,7 @@ const login = async (req, res) => {
     const { telefono_usuario, contrasena_usuario } = req.body
     
     const user = await UserModel.findByCellphone(telefono_usuario)
-
+    
     if (!user) {
       res.status(404)
       res.send({ error: 'Usuario no Encontrado' })

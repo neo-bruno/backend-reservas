@@ -1,21 +1,31 @@
 const db = require('../../config/bd')
 
-const createUser = async ({ rol_usuario, nombre_usuario, telefono_usuario, codigo_pais_usuario, contrasena_usuario, verificado_usuario, fecha_creacion_usuario }) => {
+const createUser = async ({ id_rol, nombre_usuario, telefono_usuario, codigo_pais_usuario, contrasena_usuario, verificado_usuario }) => {
   const client = await db.connect()
   try {
     await client.query('BEGIN')
-           
+
+    const personaResult = await client.query(
+      `
+      INSERT INTO public.persona(
+      nombre_persona, documento_persona, expedicion_persona, fecha_nacimiento, nit_persona, razon_social_persona, telefono_persona, tipo_persona)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;
+      `,
+      [nombre_usuario, '', '', null, '', '', telefono_usuario, 1]      
+    )
+    const Persona = personaResult.rows[0]
+    
     // 1. Guardar seccion
     const usuarioResult = await client.query(
       `
       INSERT INTO public.usuario(
-      rol_usuario, nombre_usuario, telefono_usuario, codigo_pais_usuario, contrasena_usuario, verificado_usuario, fecha_creacion_usuario)
+      id_rol, id_persona, nombre_usuario, telefono_usuario, codigo_pais_usuario, contrasena_usuario, verificado_usuario)
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *
        `,
-      [rol_usuario, nombre_usuario, telefono_usuario, codigo_pais_usuario, contrasena_usuario, verificado_usuario, fecha_creacion_usuario]
+      [ id_rol, Persona.id_persona, nombre_usuario, telefono_usuario, codigo_pais_usuario, contrasena_usuario, verificado_usuario]
     )
     const UsuarioRegistrado = usuarioResult.rows[0]
-        
+
     await client.query('COMMIT')
     return { UsuarioRegistrado }
   } catch (error) {
@@ -30,9 +40,30 @@ const findByCellphone = async (telefono_usuario) => {
   try {
     const query = {
       text: `
-        SELECT  *
-        FROM usuario
-        WHERE telefono_usuario = $1
+        SELECT 
+            u.id_usuario,
+            u.nombre_usuario,            
+            u.telefono_usuario,
+            u.codigo_pais_usuario,
+            u.contrasena_usuario,
+            u.verificado_usuario,
+            u.fecha_creacion_usuario,
+
+            json_build_object(
+                'id_persona', p.id_persona,
+                'nombre_persona', p.nombre_persona,
+                'documento_persona', p.documento_persona,
+                'expedicion_persona', p.expedicion_persona,
+                'fecha_nacimiento', p.fecha_nacimiento,
+                'razon_social_persona', p.razon_social_persona,
+                'tipo_persona', p.tipo_persona,
+                'telefono_persona', p.telefono_persona,
+                'fecha_creacion_persona', p.fecha_creacion_persona
+            ) AS persona
+
+        FROM usuario u
+        LEFT JOIN persona p ON p.id_persona = u.id_persona
+        WHERE u.telefono_usuario = $1; -- 👈 parámetro: el número de teléfono del usuario
       `,
       values: [telefono_usuario]
     }
