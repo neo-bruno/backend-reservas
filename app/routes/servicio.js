@@ -1,10 +1,11 @@
 const express = require('express')
 const router = express.Router()
 
-const { getBusiness, saveBusiness } = require('../controllers/negocio.controllres')
+
+const { saveService, getServices } = require('../controllers/servicio.controllers')
 const { checkToken } = require('../middleware/token.middleware')
 
-router.get('/:tipo_negocio', getBusiness)
-router.post('/', saveBusiness)
+router.get('/', getServices)
+router.post('/', saveService)
 
 module.exports = router

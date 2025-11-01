@@ -47,6 +47,8 @@ const findByCellphone = async (telefono_usuario) => {
             u.codigo_pais_usuario,
             u.contrasena_usuario,
             u.verificado_usuario,
+            u.codigo_verify_usuario,
+            u.fecha_codigo_usuario,
             u.fecha_creacion_usuario,
 
             json_build_object(

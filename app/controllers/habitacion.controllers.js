@@ -5,7 +5,7 @@ const saveRoom = async (req, res) => {
   try {
     const habitacion = req.body
     try {
-      const Room = await HabitacionModel.modifyRoomModel(habitacion)
+      const Room = await HabitacionModel.saveRoomModel(habitacion)
       if(!Room){
         return res.status(404).json({message: 'Habitacion no encontrada'})
       }

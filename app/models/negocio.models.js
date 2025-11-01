@@ -17,7 +17,7 @@ const saveBusinessModel = async (negocio) => {
       [ id_estado, tipo_negocio, nombre_negocio, ubicacion_negocio, descripcion_negocio, telefono_negocio ]
     );
 
-    const id_negocio = negocioResult.rows[0];
+    const id_negocio = negocioResult.rows[0].id_negocio;
 
     // 2️⃣ Asociar el usuario creador al negocio
     await client.query(

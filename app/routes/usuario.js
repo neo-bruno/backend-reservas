@@ -9,7 +9,7 @@ const { tokenSession } = require('../middleware/verifyToken.middleware')
 // Rutas públicas
 router.post('/login', login)
 router.post('/register', register)
-router.get('/:telefono_usuario', checkToken, getUserCellphone)
+router.get('/:telefono_usuario', getUserCellphone)
 
 // Rutas protegidas
 router.post('/verificacion/token', tokenSession)

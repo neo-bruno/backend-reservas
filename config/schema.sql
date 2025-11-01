@@ -62,6 +62,8 @@ CREATE TABLE usuario (
     codigo_pais_usuario VARCHAR(10) NOT NULL,    
     contrasena_usuario VARCHAR(200) NOT NULL,
     verificado_usuario BOOLEAN DEFAULT FALSE, -- se activa tras verificación WhatsApp
+    codigo_verify_usuario VARCHAR(6),
+    fecha_codigo_usuario TIMESTAMP,
     fecha_creacion_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

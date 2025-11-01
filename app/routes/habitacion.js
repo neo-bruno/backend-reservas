@@ -4,9 +4,9 @@ const router = express.Router()
 const { saveRoom, modifyRoom, getRooms, getRoomById } = require('../controllers/habitacion.controllers')
 const { checkToken } = require('../middleware/token.middleware')
 
-router.post('/', checkToken, saveRoom)
-router.put('/', checkToken, modifyRoom)
-router.get('/', checkToken, getRooms)
-router.get('/:id_habitacion', checkToken, getRoomById)
+router.post('/', saveRoom)
+router.put('/', modifyRoom)
+router.get('/', getRooms)
+router.get('/:id_habitacion', getRoomById)
 
 module.exports = router
