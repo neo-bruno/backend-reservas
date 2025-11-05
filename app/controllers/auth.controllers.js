@@ -70,8 +70,8 @@ module.exports = {
   // 🔹 Resetear contraseña
   async reset(req, res) {
     try {
-      const { telefono_usuario, codigo, nuevaContrasena } = req.body
-      await authModel.resetPassword(telefono_usuario, codigo, nuevaContrasena)
+      const { telefono_usuario, codigo_verify_usuario, nueva_contrasena_usuario } = req.body
+      await authModel.resetPassword(telefono_usuario, codigo_verify_usuario, nueva_contrasena_usuario)
       res.json({ message: 'Contraseña actualizada correctamente' })
     } catch (error) {
       res.status(400).json({ error: error.message })
