@@ -4,6 +4,7 @@ const HabitacionModel = require('../models/habitacion.models')
 const saveRoom = async (req, res) => {
   try {
     const habitacion = req.body
+    
     try {
       const Room = await HabitacionModel.saveRoomModel(habitacion)
       if(!Room){
@@ -23,6 +24,23 @@ const modifyRoom = async (req, res) => {
     const habitacion = req.body
     try {
       const RoomModify = await HabitacionModel.modifyRoomModel(habitacion)
+      if(!RoomModify){
+        return res.status(404).json({ message: 'Habitacion no encontrada'})        
+      }
+      res.status(200).json({ message: 'Habitacion se ha modificado los datos correctamente!', data: RoomModify})
+    } catch (error) {
+      res.status(500).json({ message: 'Error al modificar los datos de la habitacion', error: error.message})
+    }
+  } catch (error) {
+    httpError(res, error)
+  }
+}
+
+const modifyOnlyRoom = async (req, res) => {
+  try {
+    const habitacion = req.body
+    try {
+      const RoomModify = await HabitacionModel.modifyOnlyRoomModel(habitacion)
       if(!RoomModify){
         return res.status(404).json({ message: 'Habitacion no encontrada'})        
       }
@@ -63,6 +81,7 @@ const getRoomById = async (req, res) => {
 module.exports = {
   saveRoom,
   modifyRoom, 
+  modifyOnlyRoom,
   getRooms,
   getRoomById
 }

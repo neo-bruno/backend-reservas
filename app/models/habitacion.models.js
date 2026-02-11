@@ -8,54 +8,119 @@ const habitacionFields = (habitacion) => {
 
 const saveRoomModel = async (habitacion) => {
   const client = await db.connect()
+
   try {
     await client.query('BEGIN')
 
-    // 1️⃣ Insertar la habitación
-    const { id_negocio, id_estado, tipo_habitacion, numero_habitacion, nombre_habitacion, precio_habitacion, descripcion_habitacion, capacidad_habitacion } = habitacion
+    // 1️⃣ HABITACION    
+    const {
+      numero_habitacion,
+      nombre_habitacion,
+      adultos_habitacion,
+      ninos_habitacion,
+      descripcion_habitacion,
+      detalle_habitacion,
+      estado_habitacion
+    } = habitacion
 
-    const RoomResult = await client.query(
+    const roomResult = await client.query(
       `
-      INSERT INTO public.habitacion(
-        id_negocio, id_estado, tipo_habitacion, numero_habitacion, nombre_habitacion, precio_habitacion, descripcion_habitacion, capacidad_habitacion
+      INSERT INTO habitacion (
+        id_categoria,
+        id_nivel,
+        numero_habitacion,
+        nombre_habitacion,
+        adultos_habitacion,
+        ninos_habitacion,
+        descripcion_habitacion,
+        detalle_habitacion,
+        estado_habitacion
       )
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
       RETURNING id_habitacion
-      `,
-      [id_negocio, id_estado, tipo_habitacion, numero_habitacion, nombre_habitacion, precio_habitacion, descripcion_habitacion, capacidad_habitacion]
+    `,
+      [
+        habitacion.categoria.id_categoria,
+        habitacion.nivel.id_nivel,
+        numero_habitacion,
+        nombre_habitacion,
+        adultos_habitacion,
+        ninos_habitacion,
+        descripcion_habitacion,
+        detalle_habitacion,
+        estado_habitacion
+      ]
     )
 
-    const id_habitacion = RoomResult.rows[0].id_habitacion
+    const id_habitacion = roomResult.rows[0].id_habitacion
 
-    // 2️⃣ Insertar los servicios (si existen)
-    if (habitacion.servicios && habitacion.servicios.length > 0) {
-      for (const id_servicio of habitacion.servicios) {
+    // 2️⃣ HABITACION_CAMA
+    if (habitacion.habitacion_camas?.length) {
+      for (const cama of habitacion.habitacion_camas) {
         await client.query(
           `
-          INSERT INTO public.habitacion_servicio(id_habitacion, id_servicio)
-          VALUES ($1, $2)
+          INSERT INTO habitacion_cama (
+            id_habitacion,
+            id_cama,
+            cantidad_hab_cama,
+            costo_hab_cama,
+            total_hab_cama
+          )
+          VALUES ($1,$2,$3,$4,$5)
           `,
-          [id_habitacion, id_servicio]
+          [
+            id_habitacion,
+            cama.id_cama,
+            cama.cantidad_hab_cama,
+            cama.costo_hab_cama,
+            cama.total_hab_cama
+          ]
         )
       }
     }
 
-    // 3️⃣ Insertar las imágenes (si existen)
-    if (habitacion.imagenes && habitacion.imagenes.length > 0) {
+    // 3️⃣ SERVICIO_HAB
+    if (habitacion.servicios_habitacion?.length) {
+      for (const servicio of habitacion.servicios_habitacion) {
+        await client.query(
+          `
+          INSERT INTO servicio_hab (id_habitacion, id_servicio)
+          VALUES ($1, $2)
+          `,
+          [id_habitacion, servicio.id_servicio]
+        )
+      }
+    }
+
+    // 4️⃣ IMAGEN
+    if (habitacion.imagenes?.length) {
       for (const img of habitacion.imagenes) {
         await client.query(
           `
-          INSERT INTO public.imagen(id_habitacion, id_negocio, url_imagen, descripcion_imagen)
-          VALUES ($1, $2, $3, $4)
+          INSERT INTO imagen (
+            id_habitacion,
+            id_negocio,
+            url_imagen,
+            nombre_imagen
+          )
+          VALUES ($1,$2,$3,$4)
           `,
-          [id_habitacion, id_negocio, img.url_imagen, img.descripcion_imagen || null]
+          [
+            id_habitacion,
+            img.id_negocio,
+            img.url_imagen,
+            img.nombre_imagen || null
+          ]
         )
       }
     }
 
     await client.query('COMMIT')
 
-    return { message: 'Habitación registrada correctamente', id_habitacion }
+    return {
+      message: 'Habitación registrada correctamente',
+      id_habitacion
+    }
 
   } catch (error) {
     await client.query('ROLLBACK')
@@ -67,26 +132,199 @@ const saveRoomModel = async (habitacion) => {
 
 const modifyRoomModel = async (habitacion) => {
   const client = await db.connect()
+
   try {
     await client.query('BEGIN')
 
-    // extraemos id_habitacion y los demás campos
-    const { id_habitacion, ...rest } = habitacion
-    const fields = habitacionFields(rest)
+    const {
+      id_habitacion,
+      numero_habitacion,
+      nombre_habitacion,
+      adultos_habitacion,
+      ninos_habitacion,
+      descripcion_habitacion,
+      detalle_habitacion,
+      estado_habitacion
+    } = habitacion
 
-    // el primer parámetro siempre es id_habitacion para WHERE
-    const RoomResult = await client.query(
+    // 1️⃣ UPDATE HABITACION
+    await client.query(
       `
-      UPDATE public.habitacion
-      SET id_negocio=$2, id_estado=$3, tipo_habitacion=$4, numero_habitacion=$5, nombre_habitacion=$6, precio_habitacion=$7, descripcion_habitacion=$8, capacidad_habitacion=$9
-      WHERE id_habitacion=$1
-      RETURNING *
+      UPDATE habitacion
+      SET
+        id_categoria = $1,
+        id_nivel = $2,
+        numero_habitacion = $3,
+        nombre_habitacion = $4,
+        adultos_habitacion = $5,
+        ninos_habitacion = $6,
+        descripcion_habitacion = $7,
+        detalle_habitacion = $8,
+        estado_habitacion = $9
+      WHERE id_habitacion = $10
       `,
-      [id_habitacion, ...fields]
+      [
+        habitacion.categoria.id_categoria,
+        habitacion.nivel.id_nivel,
+        numero_habitacion,
+        nombre_habitacion,
+        adultos_habitacion,
+        ninos_habitacion,
+        descripcion_habitacion,
+        detalle_habitacion,
+        estado_habitacion,
+        id_habitacion
+      ]
+    )
+
+    // 2️⃣ DELETE RELACIONES
+    await client.query(
+      `DELETE FROM imagen WHERE id_habitacion = $1`,
+      [id_habitacion]
+    )
+
+    await client.query(
+      `DELETE FROM servicio_hab WHERE id_habitacion = $1`,
+      [id_habitacion]
+    )
+
+    await client.query(
+      `DELETE FROM habitacion_cama WHERE id_habitacion = $1`,
+      [id_habitacion]
+    )
+
+    // 3️⃣ INSERT IMÁGENES
+    if (habitacion.imagenes?.length) {
+      for (const img of habitacion.imagenes) {
+        await client.query(
+          `
+          INSERT INTO imagen (
+            id_habitacion,
+            id_negocio,
+            url_imagen,
+            nombre_imagen
+          )
+          VALUES ($1,$2,$3,$4)
+          `,
+          [
+            id_habitacion,
+            img.id_negocio,
+            img.url_imagen,
+            img.nombre_imagen || null
+          ]
+        )
+      }
+    }
+
+    // 4️⃣ INSERT SERVICIOS
+    if (habitacion.servicios?.length) {
+      for (const servicio of habitacion.servicios) {
+        await client.query(
+          `
+          INSERT INTO servicio_hab (id_habitacion, id_servicio)
+          VALUES ($1, $2)
+          `,
+          [id_habitacion, servicio.id_servicio]
+        )
+      }
+    }
+
+    // 5️⃣ INSERT HABITACION_CAMA
+    if (habitacion.habitacion_camas?.length) {
+      for (const hc of habitacion.habitacion_camas) {
+        await client.query(
+          `
+          INSERT INTO habitacion_cama (
+            id_habitacion,
+            id_cama,
+            cantidad_hab_cama,
+            costo_hab_cama,
+            total_hab_cama
+          )
+          VALUES ($1,$2,$3,$4,$5)
+          `,
+          [
+            id_habitacion,
+            hc.cama.id_cama,
+            hc.cantidad_hab_cama,
+            hc.costo_hab_cama,
+            hc.total_hab_cama
+          ]
+        )
+      }
+    }
+
+    await client.query('COMMIT')
+
+    return {
+      message: 'Habitación actualizada correctamente',
+      id_habitacion
+    }
+
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+const modifyOnlyRoomModel = async (habitacion) => {
+  const client = await db.connect()
+
+  try {
+    await client.query('BEGIN')
+
+    const {
+      id_habitacion,
+      id_categoria,
+      id_nivel,
+      numero_habitacion,
+      nombre_habitacion,
+      adultos_habitacion,
+      ninos_habitacion,
+      descripcion_habitacion,
+      detalle_habitacion,
+      estado_habitacion
+    } = habitacion
+
+    // 1️⃣ UPDATE HABITACION
+    await client.query(
+      `
+      UPDATE habitacion
+      SET
+        id_categoria = $1,
+        id_nivel = $2,
+        numero_habitacion = $3,
+        nombre_habitacion = $4,
+        adultos_habitacion = $5,
+        ninos_habitacion = $6,
+        descripcion_habitacion = $7,
+        detalle_habitacion = $8,
+        estado_habitacion = $9
+      WHERE id_habitacion = $10
+      `,
+      [
+        id_categoria,
+        id_nivel,
+        numero_habitacion,
+        nombre_habitacion,
+        adultos_habitacion,
+        ninos_habitacion,
+        descripcion_habitacion,
+        detalle_habitacion,
+        estado_habitacion,
+        id_habitacion
+      ]
     )
 
     await client.query('COMMIT')
-    return { Room: RoomResult.rows[0] }
+
+    return {
+      message: 'Habitación actualizada correctamente',
+      id_habitacion
+    }
+
   } catch (error) {
     await client.query('ROLLBACK')
     throw error
@@ -101,114 +339,143 @@ const getRoomsModel = async () => {
       text: `
         SELECT 
           h.id_habitacion,
-          h.tipo_habitacion,
-          h.nombre_habitacion,
+          h.id_categoria,
+          h.id_nivel,
           h.numero_habitacion,
+          h.nombre_habitacion,
+          h.adultos_habitacion,
+          h.ninos_habitacion,
           h.descripcion_habitacion,
-          h.precio_habitacion,
-          h.capacidad_habitacion,
-          h.fecha_creacion_habitacion,
+          h.detalle_habitacion,
+          h.estado_habitacion,
 
-          -- 🔹 Estado de la habitación
+          -- 🔹 Categoría
           json_build_object(
-            'id_estado', eh.id_estado,
-            'nombre_estado', eh.nombre_estado,
-            'descripcion_estado', eh.descripcion_estado,
-            'tipo_estado', eh.tipo_estado
-          ) AS estado_habitacion,
+            'id_categoria', c.id_categoria,
+            'nombre_categoria', c.nombre_categoria,
+            'descripcion_categoria', c.descripcion_categoria,
+            'precio_ahora_categoria', c.precio_ahora_categoria,
+            'precio_antes_categoria', c.precio_antes_categoria,
+            'descuento_categoria', c.descuento_categoria,
+            'cant_noches_categoria', c.cant_noches_categoria
+          ) AS categoria,
 
-          -- 🔹 Objeto negocio
+          -- 🔹 Nivel
           json_build_object(
-            'id_negocio', n.id_negocio,
-            'tipo_negocio', n.tipo_negocio,
-            'nombre_negocio', n.nombre_negocio,
-            'ubicacion_negocio', n.ubicacion_negocio,
-            'descripcion_negocio', n.descripcion_negocio,
-            'telefono_negocio', n.telefono_negocio,
-            'estado_negocio', json_build_object(
-              'id_estado', en.id_estado,
-              'nombre_estado', en.nombre_estado,
-              'descripcion_estado', en.descripcion_estado,
-              'tipo_estado', en.tipo_estado
-            )
-          ) AS negocio,
+            'id_nivel', n.id_nivel,
+            'nombre_nivel', n.nombre_nivel,
+            'descripcion_nivel', n.descripcion_nivel,
+            'icono_nivel', n.icono_nivel
+          ) AS nivel,
 
-          -- 🔹 Arreglo de restricciones (fechas NO disponibles)
+          -- 🔹 Imágenes
           (
-            SELECT json_agg(
-              json_build_object(
-                'id_restriccion', r0.id_restriccion,
-                'fecha_inicial_restriccion', r0.fecha_inicial_restriccion,
-                'hora_inicial_restriccion', r0.hora_inicial_restriccion,
-                'fecha_final_restriccion', r0.fecha_final_restriccion,
-                'hora_final_restriccion', r0.hora_final_restriccion,
-                'motivo_restriccion', r0.motivo_restriccion,
-                'estado_restriccion', json_build_object(
-                  'id_estado', er.id_estado,
-                  'nombre_estado', er.nombre_estado
-                ),
-                'fecha_creacion_restriccion', r0.fecha_creacion_restriccion
-              )
-              ORDER BY r0.fecha_inicial_restriccion
-            )
-            FROM restriccion r0
-            LEFT JOIN estado er ON er.id_estado = r0.estado_restriccion
-            WHERE r0.id_habitacion = h.id_habitacion
-          ) AS restricciones,
-
-          -- 🔹 Arreglo de reservas (con usuario, persona y estado)
-          (
-            SELECT json_agg(
-              json_build_object(
-                'id_reserva', r.id_reserva,
-                'check_in_reserva', r.check_in_reserva,
-                'check_out_reserva', r.check_out_reserva,
-                'hora_llegada_reserva', r.hora_llegada_reserva,
-                'monto_total_reserva', r.monto_total_reserva,
-                'fecha_creacion_reserva', r.fecha_creacion_reserva,
-
-                -- 🔸 Estado de la reserva
-                'estado_reserva', json_build_object(
-                  'id_estado', er2.id_estado,
-                  'nombre_estado', er2.nombre_estado,
-                  'descripcion_estado', er2.descripcion_estado,
-                  'tipo_estado', er2.tipo_estado
-                ),
-
-                -- 🟢 Usuario que realiza la reserva
-                'usuario', json_build_object(
-                  'id_usuario', u.id_usuario,
-                  'nombre_usuario', u.nombre_usuario,
-                  'telefono_usuario', u.telefono_usuario,
-                  'codigo_pais_usuario', u.codigo_pais_usuario,
-                  'verificado_usuario', u.verificado_usuario
-                ),
-
-                -- 🟢 Persona asociada a la reserva (si aplica)
-                'persona', (
-                  SELECT json_build_object(
-                    'id_persona', p.id_persona,
-                    'nombre_persona', p.nombre_persona,
-                    'telefono_persona', p.telefono_persona,
-                    'documento_persona', p.documento_persona
-                  )
-                  FROM persona p
-                  WHERE p.id_persona = r.id_persona
+            SELECT COALESCE(
+              json_agg(
+                json_build_object(
+                  'id_imagen', i.id_imagen,
+                  'url_imagen', i.url_imagen,
+                  'nombre_imagen', i.nombre_imagen
                 )
-              )
-              ORDER BY r.check_in_reserva
+                ORDER BY i.id_imagen
+              ),
+              '[]'::json
             )
-            FROM reserva r
-            JOIN usuario u ON u.id_usuario = r.id_usuario
-            LEFT JOIN estado er2 ON er2.id_estado = r.id_estado
+            FROM imagen i
+            WHERE i.id_habitacion = h.id_habitacion
+          ) AS imagenes,
+
+          -- 🔹 Camas
+          (
+            SELECT COALESCE(
+              json_agg(
+                json_build_object(
+                  'id_cama', ca.id_cama,
+                  'tipo_cama', ca.tipo_cama,
+                  'descripcion_cama', ca.descripcion_cama,
+                  'cant_persona_cama', ca.cant_persona_cama,
+                  'icono_persona_cama', ca.icono_persona_cama,
+                  'cantidad', hc.cantidad_hab_cama,
+                  'costo', hc.costo_hab_cama,
+                  'total', hc.total_hab_cama
+                )
+              ),
+              '[]'::json
+            )
+            FROM habitacion_cama hc
+            JOIN cama ca ON ca.id_cama = hc.id_cama
+            WHERE hc.id_habitacion = h.id_habitacion
+          ) AS camas,
+
+          -- 🔹 Servicios
+          (
+            SELECT COALESCE(
+              json_agg(
+                json_build_object(
+                  'id_servicio', s.id_servicio,
+                  'nombre_servicio', s.nombre_servicio,
+                  'icono_servicio', s.icono_servicio
+                )
+              ),
+              '[]'::json
+            )
+            FROM servicio_hab sh
+            JOIN servicio s ON s.id_servicio = sh.id_servicio
+            WHERE sh.id_habitacion = h.id_habitacion
+          ) AS servicios,
+
+          -- 🔥 🔹 RESTRICCIONES (con o sin reserva)
+          (
+            SELECT COALESCE(
+              json_agg(
+                json_build_object(
+                  'id_restriccion', r.id_restriccion,
+                  'id_habitacion', r.id_habitacion,
+                  'fecha_inicial_restriccion', r.fecha_inicial_restriccion,
+                  'hora_inicial_restriccion', r.hora_inicial_restriccion,
+                  'fecha_final_restriccion', r.fecha_final_restriccion,
+                  'hora_final_restriccion', r.hora_final_restriccion,
+                  'motivo_restriccion', r.motivo_restriccion,
+                  'estado_restriccion', r.estado_restriccion,
+
+                  'reserva', CASE
+                    WHEN res.id_reserva IS NULL THEN NULL
+                    ELSE json_build_object(
+                      'id_reserva', res.id_reserva,
+                      'id_usuario', res.id_usuario,
+                      'id_persona', res.id_persona,
+                      'id_restriccion', res.id_restriccion,
+                      'codigo_reserva', res.codigo_reserva,
+                      'fecha_reserva', res.fecha_reserva,
+                      'check_in_reserva', res.check_in_reserva,
+                      'check_out_reserva', res.check_out_reserva,
+                      'hora_llegada_reserva', res.hora_llegada_reserva,
+                      'total_estadia_reserva', res.total_estadia_reserva,
+                      'descuento_reserva', res.descuento_reserva,
+                      'servicio_reserva', res.servicio_reserva,
+                      'monto_total_reserva', res.monto_total_reserva,
+                      'estado_reserva', res.estado_reserva,
+                      'observacion_reserva', res.observacion_reserva
+                    )
+                  END
+                )
+                ORDER BY r.fecha_inicial_restriccion
+              ),
+              '[]'::json
+            )
+            FROM restriccion r
+            LEFT JOIN reserva res 
+              ON res.id_restriccion = r.id_restriccion
             WHERE r.id_habitacion = h.id_habitacion
-          ) AS reservas
+              AND r.estado_restriccion = 1
+          ) AS restricciones
 
         FROM habitacion h
-        JOIN negocio n ON n.id_negocio = h.id_negocio
-        JOIN estado eh ON eh.id_estado = h.id_estado
-        LEFT JOIN estado en ON en.id_estado = n.id_estado
+        JOIN categoria c ON c.id_categoria = h.id_categoria
+        JOIN nivel n ON n.id_nivel = h.id_nivel
+
         ORDER BY h.id_habitacion;
+
       `,
     }
 
@@ -221,131 +488,132 @@ const getRoomsModel = async () => {
 }
 
 const getRoomByIdModel = async (id_habitacion) => {
-  const query = `
-    SELECT 
+  const query = {
+
+    text: `
+      SELECT 
         h.id_habitacion,
-        h.tipo_habitacion,
         h.numero_habitacion,
         h.nombre_habitacion,
         h.descripcion_habitacion,
-        h.precio_habitacion,
-        h.capacidad_habitacion,
-        h.fecha_creacion_habitacion,
-
+        h.detalle_habitacion,
+        h.adultos_habitacion,
+        h.ninos_habitacion,
+        h.estado_habitacion,
+  
+        -- 🔹 Categoría (incluye precios)
         json_build_object(
-          'id_estado', e.id_estado,
-          'nombre_estado', e.nombre_estado,
-          'tipo_estado', e.tipo_estado,
-          'descripcion_estado', e.descripcion_estado
-        ) AS estado,
-
+          'id_categoria', c.id_categoria,
+          'nombre_categoria', c.nombre_categoria,
+          'descripcion_categoria', c.descripcion_categoria,
+          'precio_ahora_categoria', c.precio_ahora_categoria,
+          'precio_antes_categoria', c.precio_antes_categoria,
+          'descuento_categoria', c.descuento_categoria,
+          'cant_noches_categoria', c.cant_noches_categoria
+        ) AS categoria,
+  
+        -- 🔹 Nivel
         json_build_object(
-          'id_negocio', n.id_negocio,
-          'nombre_negocio', n.nombre_negocio,
-          'descripcion_negocio', n.descripcion_negocio,
-          'ubicacion_negocio', n.ubicacion_negocio,
-          'telefono_negocio', n.telefono_negocio,
-          'tipo_negocio', n.tipo_negocio,
-          'estado_negocio', n.id_estado
-        ) AS negocio,
-
+          'id_nivel', n.id_nivel,
+          'nombre_nivel', n.nombre_nivel,
+          'descripcion_nivel', n.descripcion_nivel,
+          'icono_nivel', n.icono_nivel
+        ) AS nivel,
+  
+        -- 🔹 Imágenes
         (
-          SELECT json_agg(
-            json_build_object(
-              'id_imagen', i.id_imagen,
-              'url_imagen', i.url_imagen,
-              'descripcion_imagen', i.descripcion_imagen
-            ) ORDER BY i.id_imagen
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'id_imagen', i.id_imagen,
+                'id_habitacion', i.id_habitacion,
+                'id_negocio', i.id_negocio,
+                'url_imagen', i.url_imagen,
+                'nombre_imagen', i.nombre_imagen
+              )
+              ORDER BY i.id_imagen
+            ),
+            '[]'::json
           )
           FROM imagen i
           WHERE i.id_habitacion = h.id_habitacion
         ) AS imagenes,
-
-        (
-          SELECT json_agg(
-            json_build_object(
-              'id_servicio', s.id_servicio,
-              'nombre_servicio', s.nombre_servicio,
-              'icono_servicio', s.icono_servicio
-            ) ORDER BY s.id_servicio
+        
+        -- 🔹 Relación habitación - cama (con objeto cama embebido)
+      (
+        SELECT COALESCE(
+        json_agg(
+          json_build_object(
+          'id_habitacion_cama', hc.id_habitacion_cama,
+          'cantidad_hab_cama', hc.cantidad_hab_cama,
+          'costo_hab_cama', hc.costo_hab_cama,
+          'total_hab_cama', hc.total_hab_cama,
+          'cama', json_build_object(
+            'id_cama', ca.id_cama,
+            'tipo_cama', ca.tipo_cama,
+            'descripcion_cama', ca.descripcion_cama,
+            'costo_cama', ca.costo_cama,
+            'cant_persona_cama', ca.cant_persona_cama,
+            'tipo_persona_cama', ca.tipo_persona_cama,
+            'icono_persona_cama', ca.icono_persona_cama
           )
-          FROM habitacion_servicio hs
-          JOIN servicio s ON s.id_servicio = hs.id_servicio
-          WHERE hs.id_habitacion = h.id_habitacion
+          )
+        ),
+        '[]'::json
+        )
+        FROM habitacion_cama hc
+        JOIN cama ca ON ca.id_cama = hc.id_cama
+        WHERE hc.id_habitacion = h.id_habitacion
+      ) AS habitacion_camas,
+  
+  
+        -- 🔹 Servicios
+        (
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'id_servicio', s.id_servicio,
+                'nombre_servicio', s.nombre_servicio,
+                'icono_servicio', s.icono_servicio
+              )
+            ),
+            '[]'::json
+          )
+          FROM servicio_hab sh
+          JOIN servicio s ON s.id_servicio = sh.id_servicio
+          WHERE sh.id_habitacion = h.id_habitacion
         ) AS servicios,
 
+        -- 🔹 Restricciones
         (
-          SELECT json_agg(
-            json_build_object(
-              'id_restriccion', r.id_restriccion,
-              'fecha_inicial_restriccion', r.fecha_inicial_restriccion,
-              'hora_inicial_restriccion', r.hora_inicial_restriccion,
-              'fecha_final_restriccion', r.fecha_final_restriccion,
-              'hora_final_restriccion', r.hora_final_restriccion,
-              'motivo_restriccion', r.motivo_restriccion,
-              'estado_restriccion', r.estado_restriccion
-            ) ORDER BY r.fecha_inicial_restriccion
+          SELECT COALESCE(
+            json_agg(
+              json_build_object(
+                'id_restriccion', r.id_restriccion,
+                'id_habitacion', r.id_habitacion,
+                'fecha_inicial_restriccion', r.fecha_inicial_restriccion,
+                'hora_inicial_restriccion', r.hora_inicial_restriccion,
+                'fecha_final_restriccion', r.fecha_final_restriccion,
+                'hora_final_restriccion', r.hora_final_restriccion,
+                'motivo_restriccion', r.motivo_restriccion,
+                'estado_restriccion', r.estado_restriccion
+              )
+              ORDER BY r.fecha_inicial_restriccion
+            ),
+            '[]'::json
           )
           FROM restriccion r
-          WHERE r.id_habitacion = h.id_habitacion
-        ) AS restricciones,
-
-        (
-          SELECT json_agg(
-            json_build_object(
-              'id_reserva', res.id_reserva,
-              'codigo_reserva', res.codigo_reserva,
-              'check_in_reserva', res.check_in_reserva,
-              'check_out_reserva', res.check_out_reserva,
-              'hora_llegada_reserva', res.hora_llegada_reserva,
-              'monto_total_reserva', res.monto_total_reserva,
-              'observacion_reserva', res.observacion_reserva,
-              'fecha_creacion_reserva', res.fecha_creacion_reserva,
-              'estado', json_build_object(
-                'id_estado', est.id_estado,
-                'nombre_estado', est.nombre_estado,
-                'tipo_estado', est.tipo_estado
-              ),
-              'usuario', json_build_object(
-                'id_usuario', u.id_usuario,
-                'nombre_usuario', u.nombre_usuario,
-                'telefono_usuario', u.telefono_usuario,
-                'codigo_pais_usuario', u.codigo_pais_usuario
-              )
-            ) ORDER BY res.check_in_reserva
-          )
-          FROM reserva res
-          JOIN usuario u ON u.id_usuario = res.id_usuario
-          JOIN estado est ON est.id_estado = res.id_estado
-          WHERE res.id_habitacion = h.id_habitacion
-        ) AS reservas,
-
-        (
-          SELECT json_agg(
-            json_build_object(
-              'id_resena', re.id_resena,
-              'puntuacion_resena', re.puntuacion_resena,
-              'comentario_resena', re.comentario_resena,
-              'fecha_creacion_resena', re.fecha_creacion_resena,
-              'usuario', json_build_object(
-                'id_usuario', uu.id_usuario,
-                'nombre_usuario', uu.nombre_usuario,
-                'telefono_usuario', uu.telefono_usuario
-              )
-            ) ORDER BY re.fecha_creacion_resena DESC
-          )
-          FROM resena re
-          JOIN usuario uu ON uu.id_usuario = re.id_usuario
-          JOIN reserva rr ON rr.id_reserva = re.id_reserva
-          WHERE rr.id_habitacion = h.id_habitacion
-        ) AS resenas
-
+          WHERE r.id_habitacion = h.id_habitacion and r.estado_restriccion = 1
+        ) AS restricciones
+  
       FROM habitacion h
-      JOIN negocio n ON n.id_negocio = h.id_negocio
-      JOIN estado e ON e.id_estado = h.id_estado
-      WHERE h.id_habitacion = $1;
-
-  `;
+      JOIN categoria c ON c.id_categoria = h.id_categoria
+      JOIN nivel n ON n.id_nivel = h.id_nivel
+      WHERE h.id_habitacion = $1
+      ORDER BY h.id_habitacion;
+    `,
+    values: [id_habitacion]
+  }
 
   const result = await db.query(query, [id_habitacion]);
   return result.rows[0];
@@ -355,6 +623,7 @@ const getRoomByIdModel = async (id_habitacion) => {
 module.exports = {
   saveRoomModel,
   modifyRoomModel,
+  modifyOnlyRoomModel,
   getRoomsModel,
   getRoomByIdModel,
   getRoomsModel

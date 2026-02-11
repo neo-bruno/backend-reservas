@@ -1,8 +1,9 @@
+const axios = require('axios')
 const db = require('../../config/bd')
 const bcrypt = require('../helpers/bcrypt.helper')
 
-// 🔹 Generar código aleatorio de 6 dígitos
-const generarCodigo = () => Math.floor(100000 + Math.random() * 900000).toString()
+// 🔹 Generar código aleatorio de 4 dígitos
+const generarCodigo = () => Math.floor(1000 + Math.random() * 9000).toString()
 
 /**
  * registerUser
@@ -51,7 +52,7 @@ const registerUser = async ({ id_rol, nombre_usuario, telefono_usuario, codigo_p
       const insertPersona = await client.query(
         `INSERT INTO persona (
            nombre_persona, documento_persona, expedicion_persona,
-           fecha_nacimiento, nit_persona, razon_social_persona,
+           fecha_nacimiento_persona, nit_persona, razon_social_persona,
            telefono_persona, tipo_persona
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
          RETURNING id_persona`,
@@ -59,7 +60,7 @@ const registerUser = async ({ id_rol, nombre_usuario, telefono_usuario, codigo_p
           persona.nombre_persona || nombre_usuario || null,
           persona.documento_persona || null,
           persona.expedicion_persona || null,
-          persona.fecha_nacimiento || null,
+          persona.fecha_nacimiento_persona || null,
           persona.nit_persona || null,
           persona.razon_social_persona || null,
           persona.telefono_persona || telefono_usuario,
@@ -76,10 +77,10 @@ const registerUser = async ({ id_rol, nombre_usuario, telefono_usuario, codigo_p
     const insertUsuario = await client.query(
       `INSERT INTO usuario (
          id_rol, id_persona, nombre_usuario, telefono_usuario, codigo_pais_usuario,
-         contrasena_usuario, verificado_usuario, codigo_verify_usuario, fecha_codigo_usuario
-       ) VALUES ($1,$2,$3,$4,$5,$6,false,$7,NOW())
-       RETURNING id_usuario, nombre_usuario, telefono_usuario, codigo_verify_usuario`,
-      [id_rol, id_persona, nombre_usuario, telefono_usuario, codigo_pais_usuario, hash, codigo]
+         contrasena_usuario, verificado_usuario
+       ) VALUES ($1,$2,$3,$4,$5,$6,false)
+       RETURNING id_usuario, nombre_usuario, telefono_usuario, verificado_usuario`,
+      [id_rol, id_persona, nombre_usuario, telefono_usuario, codigo_pais_usuario, hash]
     )
 
     await client.query('COMMIT')
@@ -145,6 +146,56 @@ const sendRecoveryCode = async (telefono) => {
   return result.rows[0]
 }
 
+const sendCodeRegister = async (telefono) => {
+  try {
+    const codigo = generarCodigo()
+
+    // 🔹 Normalizar teléfono
+    let numeroFinal = telefono.replace(/\D/g, '')
+    if (!numeroFinal.startsWith('591')) {
+      numeroFinal = '591' + numeroFinal
+    }
+
+    // 🔹 Guardar o actualizar OTP (usuario NO necesario)
+    await db.query(
+      `
+      INSERT INTO otp (telefono_otp, codigo_otp) VALUES ($1, $2)
+      `,
+      [numeroFinal, codigo]
+    )
+
+    // 🔹 Green API
+    const url = `https://api.green-api.com/waInstance${process.env.GREEN_API_ID}/sendMessage/${process.env.GREEN_API_TOKEN}`
+
+    console.log('📲 Enviando WhatsApp a:', `${numeroFinal}@c.us`)
+
+    // 🔹 Enviar WhatsApp
+    await axios.post(url, {
+      chatId: `${numeroFinal}@c.us`,
+      message: `🔐 Tu código de verificación es: *${codigo}*\n\nVálido por 3 minutos.`,
+    })
+
+    console.log(`✅ Código enviado ${codigo} al WhatsApp: ${numeroFinal}`)
+
+    return { codigo: codigo }
+
+  } catch (error) {
+    const errorMsg = error.response?.data?.error || error.message
+
+    console.error('❌ Error Green API:', errorMsg)
+
+    // 🎯 Error claro para el frontend
+    if (
+      errorMsg.includes('not registered') ||
+      errorMsg.includes('chat not found')
+    ) {
+      throw new Error('El número no tiene WhatsApp')
+    }
+
+    throw new Error('No se pudo enviar el código de verificación')
+  }
+}
+
 // 🔹 Resetear contraseña
 const resetPassword = async (telefono, codigo, nuevaContrasena) => {
   const result = await db.query(`
@@ -168,5 +219,6 @@ module.exports = {
   verifyCode,
   loginUser,
   sendRecoveryCode,
-  resetPassword
+  resetPassword,
+  sendCodeRegister
 }

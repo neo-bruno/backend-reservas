@@ -28,3 +28,6 @@ Thumbs.db
 # Output
 dist/
 build/
+
+# Firebase credentials
+config/serviceAccountKey.json

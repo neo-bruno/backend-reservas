@@ -17,6 +17,24 @@ const saveBusiness = async (req, res) => {
   }
 }
 
+const modifyBusiness = async (req, res) => {
+  try {
+    try {
+      const negocio = req.body
+
+      const business = await BusinessModel.modifyBusinessModel(negocio)
+
+      if (!business)
+        return res.status(404).json({ message: 'no se ha encontrado el objeto negocio' })
+      res.status(200).json({ message: 'Negocio Modificado correctamente!' })
+    } catch (error) {
+      res.status(500).json({ message: 'error al modificar el objeto negocio!!!', error: error.message })
+    }
+  } catch (error) {
+    httpError(res, error)
+  }
+}
+
 const getBusiness = async (req, res) => {
   const tipo_negocio = req.params.tipo_negocio
   try {
@@ -26,7 +44,7 @@ const getBusiness = async (req, res) => {
         return res.status(404).json({ message: 'No encontro el Negocio.' })
       res.status(201).json({ message: 'se ha obtenido los negocios correspondientes', data: Negocio })
     } catch (error) {
-      res.status(500).json({ message: 'Error, no se ha obtenido los negocios respectivos', error: error.message})
+      res.status(500).json({ message: 'Error, no se ha obtenido los negocios respectivos', error: error.message })
     }
   } catch (error) {
     httpError(res, error)
@@ -35,5 +53,6 @@ const getBusiness = async (req, res) => {
 
 module.exports = {
   saveBusiness,
+  modifyBusiness,
   getBusiness
 }
