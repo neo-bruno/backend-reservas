@@ -26,713 +26,359 @@
 /* Created on:     06/02/2026 12:10:25                          */
 /*==============================================================*/
 
-/*==============================================================*/
-/* Table: CAMA                                                  */
-/*==============================================================*/
-create table CAMA (
-   ID_CAMA              SERIAL               not null,
-   TIPO_CAMA            VARCHAR(250)         null,
-   DESCRIPCION_CAMA     TEXT                 null,
-   COSTO_CAMA           NUMERIC(8,2)         null,
-   CANT_PERSONA_CAMA    INT4                 null,
-   TIPO_PERSONA_CAMA    VARCHAR(250)         null,
-   ICONO_PERSONA_CAMA   VARCHAR(250)         null,
-   constraint PK_CAMA primary key (ID_CAMA)
+CREATE TABLE "cama" (
+  "id_cama" integer PRIMARY KEY NOT NULL,
+  "tipo_cama" "character varying(250)",
+  "descripcion_cama" text,
+  "costo_cama" numeric(8,2),
+  "cant_persona_cama" integer,
+  "tipo_persona_cama" "character varying(250)",
+  "icono_persona_cama" "character varying(250)"
 );
 
-/*==============================================================*/
-/* Index: CAMA_PK                                               */
-/*==============================================================*/
-create unique index CAMA_PK on CAMA (
-ID_CAMA
+CREATE TABLE "categoria" (
+  "id_categoria" integer PRIMARY KEY NOT NULL,
+  "nombre_categoria" "character varying(250)" NOT NULL,
+  "descripcion_categoria" text,
+  "precio_ahora_categoria" numeric(8,2),
+  "precio_antes_categoria" numeric(8,2),
+  "descuento_categoria" numeric(8,2),
+  "cant_noches_categoria" integer
 );
 
-/*==============================================================*/
-/* Table: CATEGORIA                                             */
-/*==============================================================*/
-create table CATEGORIA (
-   ID_CATEGORIA         SERIAL               not null,
-   NOMBRE_CATEGORIA     VARCHAR(250)         not null,
-   DESCRIPCION_CATEGORIA TEXT                 null,
-   PRECIO_AHORA_CATEGORIA NUMERIC(8,2)         null,
-   PRECIO_ANTES_CATEGORIA NUMERIC(8,2)         null,
-   DESCUENTO_CATEGORIA  NUMERIC(8,2)         null,
-   CANT_NOCHES_CATEGORIA INT4                 null,
-   constraint PK_CATEGORIA primary key (ID_CATEGORIA)
+CREATE TABLE "foto" (
+  "id_foto" integer PRIMARY KEY NOT NULL,
+  "id_seccion" integer NOT NULL,
+  "nombre_foto" "character varying(250)",
+  "url_foto" text
 );
 
-/*==============================================================*/
-/* Index: CATEGORIA_PK                                          */
-/*==============================================================*/
-create unique index CATEGORIA_PK on CATEGORIA (
-ID_CATEGORIA
+CREATE TABLE "habitacion" (
+  "id_habitacion" integer PRIMARY KEY NOT NULL,
+  "id_categoria" integer NOT NULL,
+  "id_nivel" integer NOT NULL,
+  "numero_habitacion" "character varying(100)" NOT NULL,
+  "nombre_habitacion" "character varying(250)" NOT NULL,
+  "adultos_habitacion" integer,
+  "ninos_habitacion" integer,
+  "descripcion_habitacion" text,
+  "detalle_habitacion" text,
+  "estado_habitacion" integer
 );
 
-/*==============================================================*/
-/* Table: FOTO                                                  */
-/*==============================================================*/
-create table FOTO (
-   ID_FOTO              SERIAL               not null,
-   ID_SECCION           INT4                 not null,
-   NOMBRE_FOTO          VARCHAR(250)         null,
-   URL_FOTO             TEXT                 null,
-   constraint PK_FOTO primary key (ID_FOTO)
+CREATE TABLE "habitacion_cama" (
+  "id_habitacion_cama" integer PRIMARY KEY NOT NULL,
+  "id_habitacion" integer NOT NULL,
+  "id_cama" integer NOT NULL,
+  "cantidad_hab_cama" integer,
+  "costo_hab_cama" numeric(8,2),
+  "total_hab_cama" numeric(8,2)
 );
 
-/*==============================================================*/
-/* Index: FOTO_PK                                               */
-/*==============================================================*/
-create unique index FOTO_PK on FOTO (
-ID_FOTO
+CREATE TABLE "icono" (
+  "id_icono" integer PRIMARY KEY NOT NULL,
+  "id_seccion" integer NOT NULL,
+  "nombre_icono" text,
+  "titulo_icono" text,
+  "subtitulo_icono" text,
+  "descripcion_icono" text
 );
 
-/*==============================================================*/
-/* Table: HABITACION                                            */
-/*==============================================================*/
-create table HABITACION (
-   ID_HABITACION        SERIAL               not null,
-   ID_CATEGORIA         INT4                 not null,
-   ID_NIVEL             INT4                 not null,
-   NUMERO_HABITACION    VARCHAR(100)         not null,
-   NOMBRE_HABITACION    VARCHAR(250)         not null,
-   ADULTOS_HABITACION   INT4                 null,
-   NINOS_HABITACION     INT4                 null,
-   DESCRIPCION_HABITACION TEXT                 null,
-   DETALLE_HABITACION   TEXT                 null,
-   ESTADO_HABITACION    INT4                 null,
-   constraint PK_HABITACION primary key (ID_HABITACION)
+CREATE TABLE "imagen" (
+  "id_imagen" integer PRIMARY KEY NOT NULL,
+  "id_habitacion" integer NOT NULL,
+  "id_negocio" integer NOT NULL,
+  "url_imagen" text NOT NULL,
+  "nombre_imagen" text
 );
 
-/*==============================================================*/
-/* Index: HABITACION_PK                                         */
-/*==============================================================*/
-create unique index HABITACION_PK on HABITACION (
-ID_HABITACION
+CREATE TABLE "negocio" (
+  "id_negocio" integer PRIMARY KEY NOT NULL,
+  "tipo_negocio" integer NOT NULL,
+  "nombre_negocio" "character varying(250)" NOT NULL,
+  "ubicacion_negocio" text NOT NULL,
+  "descripcion_negocio" text NOT NULL,
+  "telefono_negocio" "character varying(20)" NOT NULL,
+  "estado_negocio" integer,
+  "url_negocio" text,
+  "nombre_url_negocio" "character varying(250)",
+  "codigo_celular_negocio" "character varying(200)"
 );
 
-/*==============================================================*/
-/* Index: CATEGORIA_HABITACION_FK                               */
-/*==============================================================*/
-create  index CATEGORIA_HABITACION_FK on HABITACION (
-ID_CATEGORIA
+CREATE TABLE "nivel" (
+  "id_nivel" integer PRIMARY KEY NOT NULL,
+  "nombre_nivel" "character varying(100)" NOT NULL,
+  "descripcion_nivel" text,
+  "icono_nivel" text
 );
 
-/*==============================================================*/
-/* Index: NIVEL_HABITACION_FK                                   */
-/*==============================================================*/
-create  index NIVEL_HABITACION_FK on HABITACION (
-ID_NIVEL
+CREATE TABLE "otp" (
+  "telefono_otp" "character varying(20)" PRIMARY KEY NOT NULL,
+  "codigo_otp" "character varying(10)" NOT NULL,
+  "fecha_creacion_otp" date DEFAULT ('2026-01-09'::date),
+  "intentos_otp" integer,
+  "usado_otp" boolean DEFAULT false
 );
 
-/*==============================================================*/
-/* Table: HABITACION_CAMA                                       */
-/*==============================================================*/
-create table HABITACION_CAMA (
-   ID_HABITACION_CAMA   SERIAL               not null,
-   ID_HABITACION        INT4                 not null,
-   ID_CAMA              INT4                 not null,
-   CANTIDAD_HAB_CAMA    INT4                 null,
-   COSTO_HAB_CAMA       NUMERIC(8,2)         null,
-   TOTAL_HAB_CAMA       NUMERIC(8,2)         null,
-   constraint PK_HABITACION_CAMA primary key (ID_HABITACION_CAMA)
+CREATE TABLE "pago" (
+  "id_pago" integer PRIMARY KEY NOT NULL,
+  "id_reserva" integer NOT NULL,
+  "monto_pago" numeric(8,2),
+  "tipo_pago" integer NOT NULL,
+  "metodo_pago" integer NOT NULL,
+  "comision_pago" numeric(8,2),
+  "fecha_pago" timestamp NOT NULL,
+  "estado_pago" integer NOT NULL,
+  "url_pago" text
 );
 
-/*==============================================================*/
-/* Index: HABITACION_CAMA_PK                                    */
-/*==============================================================*/
-create unique index HABITACION_CAMA_PK on HABITACION_CAMA (
-ID_HABITACION_CAMA
+CREATE TABLE "password_resets" (
+  "id_reset" integer PRIMARY KEY NOT NULL,
+  "id_usuario" integer NOT NULL,
+  "token_hash" "character varying(64)" NOT NULL,
+  "expires_at" timestamp NOT NULL,
+  "used" boolean DEFAULT false,
+  "created_at" timestamp DEFAULT (now())
 );
 
-/*==============================================================*/
-/* Index: CAMA_HABITACION_CAMA_FK                               */
-/*==============================================================*/
-create  index CAMA_HABITACION_CAMA_FK on HABITACION_CAMA (
-ID_CAMA
+CREATE TABLE "persona" (
+  "id_persona" integer PRIMARY KEY NOT NULL,
+  "nombre_persona" "character varying(250)" NOT NULL,
+  "documento_persona" "character varying(50)",
+  "expedicion_persona" "character varying(10)",
+  "fecha_nacimiento_persona" date,
+  "nit_persona" "character varying(122)",
+  "razon_social_persona" "character varying(250)",
+  "telefono_persona" "character varying(1024)",
+  "tipo_persona" integer
 );
 
-/*==============================================================*/
-/* Index: HABITACION_CAMA_HABITACION_FK                         */
-/*==============================================================*/
-create  index HABITACION_CAMA_HABITACION_FK on HABITACION_CAMA (
-ID_HABITACION
+CREATE TABLE "pie" (
+  "id_pie" integer PRIMARY KEY NOT NULL,
+  "id_seccion" integer NOT NULL,
+  "nombre_pie" text,
+  "url_pie" text,
+  "mapa_pie" text
 );
 
-/*==============================================================*/
-/* Table: ICONO                                                 */
-/*==============================================================*/
-create table ICONO (
-   ID_ICONO             SERIAL               not null,
-   ID_SECCION           INT4                 not null,
-   NOMBRE_ICONO         TEXT                 null,
-   TITULO_ICONO         TEXT                 null,
-   SUBTITULO_ICONO      TEXT                 null,
-   DESCRIPCION_ICONO    TEXT                 null,
-   constraint PK_ICONO primary key (ID_ICONO)
+CREATE TABLE "resena" (
+  "id_resena" integer PRIMARY KEY NOT NULL,
+  "id_habitacion" integer NOT NULL,
+  "id_usuario" integer NOT NULL,
+  "fecha_resena" date,
+  "puntuacion_resena" integer,
+  "comentario_resena" text,
+  "estado_resena" boolean NOT NULL DEFAULT false
 );
 
-/*==============================================================*/
-/* Index: ICONO_PK                                              */
-/*==============================================================*/
-create unique index ICONO_PK on ICONO (
-ID_ICONO
+CREATE TABLE "reserva" (
+  "id_reserva" integer PRIMARY KEY NOT NULL,
+  "id_usuario" integer NOT NULL,
+  "id_persona" integer NOT NULL,
+  "id_habitacion" integer NOT NULL,
+  "id_restriccion" integer NOT NULL,
+  "codigo_reserva" "character varying(250)" NOT NULL,
+  "fecha_reserva" timestamp,
+  "check_in_reserva" date NOT NULL,
+  "check_out_reserva" date NOT NULL,
+  "hora_llegada_reserva" time,
+  "total_estadia_reserva" numeric(8,2),
+  "descuento_reserva" numeric(8,2),
+  "servicio_reserva" numeric(8,2),
+  "monto_total_reserva" numeric(8,2),
+  "estado_reserva" integer,
+  "observacion_reserva" text,
+  "condicion_reserva" integer DEFAULT 2
 );
 
-/*==============================================================*/
-/* Table: IMAGEN                                                */
-/*==============================================================*/
-create table IMAGEN (
-   ID_IMAGEN            SERIAL               not null,
-   ID_HABITACION        INT4                 not null,
-   URL_IMAGEN           TEXT                 not null,
-   NOMBRE_IMAGEN        TEXT                 null,
-   constraint PK_IMAGEN primary key (ID_IMAGEN)
+CREATE TABLE "restriccion" (
+  "id_restriccion" integer PRIMARY KEY NOT NULL,
+  "id_habitacion" integer NOT NULL,
+  "fecha_inicial_restriccion" date NOT NULL,
+  "hora_inicial_restriccion" time NOT NULL,
+  "fecha_final_restriccion" date NOT NULL,
+  "hora_final_restriccion" time NOT NULL,
+  "motivo_restriccion" text,
+  "estado_restriccion" integer
 );
 
-/*==============================================================*/
-/* Index: IMAGEN_PK                                             */
-/*==============================================================*/
-create unique index IMAGEN_PK on IMAGEN (
-ID_IMAGEN
+CREATE TABLE "rol" (
+  "id_rol" integer PRIMARY KEY NOT NULL,
+  "nombre_rol" "character varying(250)" NOT NULL
 );
 
-/*==============================================================*/
-/* Index: IMAGEN_HABITACION_FK                                  */
-/*==============================================================*/
-create  index IMAGEN_HABITACION_FK on IMAGEN (
-ID_HABITACION
+CREATE TABLE "seccion" (
+  "id_seccion" integer PRIMARY KEY NOT NULL,
+  "id_negocio" integer,
+  "tipo_seccion" integer,
+  "nombre_seccion" text,
+  "titulo_seccion" text,
+  "subtitulo_seccion" text,
+  "detalle_seccion" text,
+  "descripcion_seccion" text,
+  "url_seccion" text,
+  "video_seccion" text
 );
 
-/*==============================================================*/
-/* Table: NEGOCIO                                               */
-/*==============================================================*/
-create table NEGOCIO (
-   ID_NEGOCIO           SERIAL               not null,
-   TIPO_NEGOCIO         INT4                 not null,
-   NOMBRE_NEGOCIO       VARCHAR(250)         not null,
-   UBICACION_NEGOCIO    TEXT                 not null,
-   DESCRIPCION_NEGOCIO  TEXT                 not null,
-   TELEFONO_NEGOCIO     VARCHAR(20)          not null,
-   ESTADO_NEGOCIO       INT4                 null,
-   URL_NEGOCIO          TEXT                 null,
-   NOMBRE_URL_NEGOCIO   VARCHAR(250)         null,
-   constraint PK_NEGOCIO primary key (ID_NEGOCIO)
+CREATE TABLE "servicio" (
+  "id_servicio" integer PRIMARY KEY NOT NULL,
+  "nombre_servicio" "character varying(250)" NOT NULL,
+  "icono_servicio" "character varying(100)" NOT NULL
 );
 
-/*==============================================================*/
-/* Index: NEGOCIO_PK                                            */
-/*==============================================================*/
-create unique index NEGOCIO_PK on NEGOCIO (
-ID_NEGOCIO
+CREATE TABLE "servicio_hab" (
+  "id_servicio_hab" integer PRIMARY KEY NOT NULL,
+  "id_habitacion" integer NOT NULL,
+  "id_servicio" integer NOT NULL
 );
 
-/*==============================================================*/
-/* Table: NIVEL                                                 */
-/*==============================================================*/
-create table NIVEL (
-   ID_NIVEL             SERIAL               not null,
-   NOMBRE_NIVEL         VARCHAR(100)         not null,
-   DESCRIPCION_NIVEL    TEXT                 null,
-   ICONO_NIVEL          TEXT                 null,
-   constraint PK_NIVEL primary key (ID_NIVEL)
+CREATE TABLE "usuario" (
+  "id_usuario" integer PRIMARY KEY NOT NULL,
+  "id_rol" integer NOT NULL,
+  "id_persona" integer NOT NULL,
+  "nombre_usuario" "character varying(250)",
+  "telefono_usuario" "character varying(20)" NOT NULL,
+  "codigo_pais_usuario" "character varying(10)" NOT NULL,
+  "contrasena_usuario" "character varying(200)" NOT NULL,
+  "verificado_usuario" boolean DEFAULT false,
+  "email_usuario" "character varying(250)",
+  "verificado_phone_usuario" boolean DEFAULT false,
+  "verificado_email_usuario" boolean DEFAULT false,
+  "metodo_registro_usuario" "character varying(250)"
 );
 
-/*==============================================================*/
-/* Index: NIVEL_PK                                              */
-/*==============================================================*/
-create unique index NIVEL_PK on NIVEL (
-ID_NIVEL
+CREATE TABLE "usuario_negocio" (
+  "id_usuario_negocio" integer PRIMARY KEY NOT NULL,
+  "id_negocio" integer NOT NULL,
+  "id_usuario" integer NOT NULL,
+  "rol_usuario_negocio" "character varying(250)" NOT NULL
 );
 
-/*==============================================================*/
-/* Table: PAGO                                                  */
-/*==============================================================*/
-create table PAGO (
-   ID_PAGO              SERIAL               not null,
-   ID_RESERVA           INT4                 not null,
-   MONTO_PAGO           NUMERIC(8,2)         null,
-   TIPO_PAGO            INT4                 not null,
-   METODO_PAGO          INT4                 not null,
-   COMISION_PAGO        NUMERIC(8,2)         null,
-   FECHA_PAGO           DATE                 not null,
-   ESTADO_PAGO          INT4                 not null,
-   URL_PAGO             TEXT                 null,
-   constraint PK_PAGO primary key (ID_PAGO)
-);
-
-/*==============================================================*/
-/* Index: PAGO_PK                                               */
-/*==============================================================*/
-create unique index PAGO_PK on PAGO (
-ID_PAGO
-);
-
-/*==============================================================*/
-/* Index: PAGO_RESERVA_FK                                       */
-/*==============================================================*/
-create  index PAGO_RESERVA_FK on PAGO (
-ID_RESERVA
-);
-
-/*==============================================================*/
-/* Table: PERSONA                                               */
-/*==============================================================*/
-create table PERSONA (
-   ID_PERSONA           SERIAL               not null,
-   NOMBRE_PERSONA       VARCHAR(250)         not null,
-   DOCUMENTO_PERSONA    VARCHAR(50)          null,
-   EXPEDICION_PERSONA   VARCHAR(10)          null,
-   FECHA_NACIMIENTO_PERSONA DATE                 null,
-   NIT_PERSONA          VARCHAR(122)         null,
-   RAZON_SOCIAL_PERSONA VARCHAR(250)         null,
-   TELEFONO_PERSONA     VARCHAR(1024)        null,
-   TIPO_PERSONA         INT4                 null,
-   constraint PK_PERSONA primary key (ID_PERSONA)
-);
-
-/*==============================================================*/
-/* Index: PERSONA_PK                                            */
-/*==============================================================*/
-create unique index PERSONA_PK on PERSONA (
-ID_PERSONA
-);
-
-/*==============================================================*/
-/* Table: PIE                                                   */
-/*==============================================================*/
-create table PIE (
-   ID_PIE               SERIAL               not null,
-   ID_SECCION           INT4                 not null,
-   NOMBRE_PIE           TEXT                 null,
-   URL_PIE              TEXT                 null,
-   MAPA_PIE             TEXT                 null,
-   constraint PK_PIE primary key (ID_PIE)
-);
-
-/*==============================================================*/
-/* Index: PIE_PK                                                */
-/*==============================================================*/
-create unique index PIE_PK on PIE (
-ID_PIE
-);
-
-/*==============================================================*/
-/* Table: RESENA                                                */
-/*==============================================================*/
-create table RESENA (
-   ID_RESENA            SERIAL               not null,
-   ID_HABITACION        INT4                 not null,
-   ID_USUARIO           INT4                 not null,
-   FECHA_RESENA         DATE                 null,
-   PUNTUACION_RESENA    INT4                 null,
-   COMENTARIO_RESENA    TEXT                 null,
-   ESTADO_RESENA        BOOL                 not null default false,
-   constraint PK_RESENA primary key (ID_RESENA)
-);
-
-/*==============================================================*/
-/* Index: RESENA_PK                                             */
-/*==============================================================*/
-create unique index RESENA_PK on RESENA (
-ID_RESENA
-);
-
-/*==============================================================*/
-/* Index: RESENA_USUARIO_FK                                     */
-/*==============================================================*/
-create  index RESENA_USUARIO_FK on RESENA (
-ID_USUARIO
-);
-
-/*==============================================================*/
-/* Index: RESENA_HABITACION_FK                                  */
-/*==============================================================*/
-create  index RESENA_HABITACION_FK on RESENA (
-ID_HABITACION
-);
-
-/*==============================================================*/
-/* Table: RESERVA                                               */
-/*==============================================================*/
-create table RESERVA (
-   ID_RESERVA           SERIAL               not null,
-   ID_USUARIO           INT4                 not null,
-   ID_PERSONA           INT4                 not null,
-   ID_HABITACION        INT4                 not null,
-   ID_RESTRICCION       INT4                 not null,
-   CODIGO_RESERVA       VARCHAR(250)         not null,
-   FECHA_RESERVA        DATE                 null,
-   CHECK_IN_RESERVA     DATE                 not null,
-   CHECK_OUT_RESERVA    DATE                 not null,
-   HORA_LLEGADA_RESERVA TIME                 null,
-   TOTAL_ESTADIA_RESERVA NUMERIC(8,2)         null,
-   DESCUENTO_RESERVA    NUMERIC(8,2)         null,
-   SERVICIO_RESERVA     NUMERIC(8,2)         null,
-   MONTO_TOTAL_RESERVA  NUMERIC(8,2)         null,
-   ESTADO_RESERVA       INT4                 null,
-   OBSERVACION_RESERVA  TEXT                 null,
-   CONDICION_RESERVA    INT4                 null,
-   constraint PK_RESERVA primary key (ID_RESERVA)
-);
-
-/*==============================================================*/
-/* Index: RESERVA_PK                                            */
-/*==============================================================*/
-create unique index RESERVA_PK on RESERVA (
-ID_RESERVA
-);
-
-/*==============================================================*/
-/* Index: RESERVA_USUARIO_FK                                    */
-/*==============================================================*/
-create  index RESERVA_USUARIO_FK on RESERVA (
-ID_USUARIO
-);
-
-/*==============================================================*/
-/* Index: RESERVA_HABITACION_FK                                 */
-/*==============================================================*/
-create  index RESERVA_HABITACION_FK on RESERVA (
-ID_HABITACION
-);
-
-/*==============================================================*/
-/* Index: RESERVA_RESTRICCION_FK                                */
-/*==============================================================*/
-create  index RESERVA_RESTRICCION_FK on RESERVA (
-ID_RESTRICCION
-);
-
-/*==============================================================*/
-/* Index: RESERVA_PERSONA_FK                                    */
-/*==============================================================*/
-create  index RESERVA_PERSONA_FK on RESERVA (
-ID_PERSONA
-);
-
-/*==============================================================*/
-/* Table: RESTRICCION                                           */
-/*==============================================================*/
-create table RESTRICCION (
-   ID_RESTRICCION       SERIAL               not null,
-   ID_HABITACION        INT4                 not null,
-   FECHA_INICIAL_RESTRICCION DATE                 not null,
-   HORA_INICIAL_RESTRICCION TIME                 not null,
-   FECHA_FINAL_RESTRICCION DATE                 not null,
-   HORA_FINAL_RESTRICCION TIME                 not null,
-   MOTIVO_RESTRICCION   TEXT                 null,
-   ESTADO_RESTRICCION   INT4                 null,
-   constraint PK_RESTRICCION primary key (ID_RESTRICCION)
-);
-
-/*==============================================================*/
-/* Index: RESTRICCION_PK                                        */
-/*==============================================================*/
-create unique index RESTRICCION_PK on RESTRICCION (
-ID_RESTRICCION
-);
-
-/*==============================================================*/
-/* Index: RESTRICCION_HABITACION_FK                             */
-/*==============================================================*/
-create  index RESTRICCION_HABITACION_FK on RESTRICCION (
-ID_HABITACION
-);
-
-/*==============================================================*/
-/* Table: ROL                                                   */
-/*==============================================================*/
-create table ROL (
-   ID_ROL               SERIAL               not null,
-   NOMBRE_ROL           VARCHAR(250)         not null,
-   constraint PK_ROL primary key (ID_ROL)
-);
-
-/*==============================================================*/
-/* Index: ROL_PK                                                */
-/*==============================================================*/
-create unique index ROL_PK on ROL (
-ID_ROL
-);
-
-/*==============================================================*/
-/* Table: SECCION                                               */
-/*==============================================================*/
-create table SECCION (
-   ID_SECCION           SERIAL               not null,
-   ID_NEGOCIO           INT4                 not null,
-   TIPO_SECCION         INT4                 null,
-   NOMBRE_SECCION       TEXT                 null,
-   TITULO_SECCION       TEXT                 null,
-   SUBTITULO_SECCION    TEXT                 null,
-   DETALLE_SECCION      TEXT                 null,
-   DESCRIPCION_SECCION  TEXT                 null,
-   URL_SECCION          TEXT                 null,
-   VIDEO_SECCION        TEXT                 null,
-   constraint PK_SECCION primary key (ID_SECCION)
-);
-
-/*==============================================================*/
-/* Index: SECCION_PK                                            */
-/*==============================================================*/
-create unique index SECCION_PK on SECCION (
-ID_SECCION
-);
-
-/*==============================================================*/
-/* Index: SECCION_NEGOCIO_FK                                    */
-/*==============================================================*/
-create  index SECCION_NEGOCIO_FK on SECCION (
-ID_NEGOCIO
-);
-
-/*==============================================================*/
-/* Table: SERVICIO                                              */
-/*==============================================================*/
-create table SERVICIO (
-   ID_SERVICIO          SERIAL               not null,
-   NOMBRE_SERVICIO      VARCHAR(250)         not null,
-   ICONO_SERVICIO       VARCHAR(100)         not null,
-   constraint PK_SERVICIO primary key (ID_SERVICIO)
-);
-
-/*==============================================================*/
-/* Index: SERVICIO_PK                                           */
-/*==============================================================*/
-create unique index SERVICIO_PK on SERVICIO (
-ID_SERVICIO
-);
-
-/*==============================================================*/
-/* Table: SERVICIO_HAB                                          */
-/*==============================================================*/
-create table SERVICIO_HAB (
-   ID_SERVICIO_HAB      SERIAL               not null,
-   ID_HABITACION        INT4                 not null,
-   ID_SERVICIO          INT4                 not null,
-   constraint PK_SERVICIO_HAB primary key (ID_SERVICIO_HAB)
-);
-
-/*==============================================================*/
-/* Index: SERVICIO_HAB_PK                                       */
-/*==============================================================*/
-create unique index SERVICIO_HAB_PK on SERVICIO_HAB (
-ID_SERVICIO_HAB
-);
-
-/*==============================================================*/
-/* Index: HAB_SERV_HAB_FK                                       */
-/*==============================================================*/
-create  index HAB_SERV_HAB_FK on SERVICIO_HAB (
-ID_HABITACION
-);
-
-/*==============================================================*/
-/* Index: SERVICIO_HABITACION_SERVICIO_FK                       */
-/*==============================================================*/
-create  index SERVICIO_HABITACION_SERVICIO_FK on SERVICIO_HAB (
-ID_SERVICIO
-);
-
-/*==============================================================*/
-/* Table: USUARIO                                               */
-/*==============================================================*/
-create table USUARIO (
-   ID_USUARIO           SERIAL               not null,
-   ID_ROL               INT4                 not null,
-   ID_PERSONA           INT4                 not null,
-   NOMBRE_USUARIO       VARCHAR(250)         null,
-   TELEFONO_USUARIO     VARCHAR(20)          not null,
-   CODIGO_PAIS_USUARIO  VARCHAR(10)          not null,
-   CONTRASENA_USUARIO   VARCHAR(200)         not null,
-   VERIFICADO_USUARIO   BOOL                 null default false,
-   EMAIL_USUARIO        VARCHAR(250)         null,
-   VERIFICADO_PHONE_USUARIO BOOL                 null default false,
-   VERIFICADO_EMAIL_USUARIO BOOL                 null default false,
-   METODO_REGISTRO_USUARIO VARCHAR(250)         null,
-   constraint PK_USUARIO primary key (ID_USUARIO)
-);
-
-/*==============================================================*/
-/* Index: USUARIO_PK                                            */
-/*==============================================================*/
-create unique index USUARIO_PK on USUARIO (
-ID_USUARIO
-);
-
-/*==============================================================*/
-/* Index: USUARIO_PERSONA_FK                                    */
-/*==============================================================*/
-create  index USUARIO_PERSONA_FK on USUARIO (
-ID_PERSONA
-);
-
-/*==============================================================*/
-/* Index: USUARIO_ROL_FK                                        */
-/*==============================================================*/
-create  index USUARIO_ROL_FK on USUARIO (
-ID_ROL
-);
-
-/*==============================================================*/
-/* Table: USUARIO_NEGOCIO                                       */
-/*==============================================================*/
-create table USUARIO_NEGOCIO (
-   ID_USUARIO_NEGOCIO   SERIAL               not null,
-   ID_NEGOCIO           INT4                 not null,
-   ID_USUARIO           INT4                 not null,
-   ROL_USUARIO_NEGOCIO  VARCHAR(250)         not null,
-   constraint PK_USUARIO_NEGOCIO primary key (ID_USUARIO_NEGOCIO)
-);
-
-/*==============================================================*/
-/* Index: USUARIO_NEGOCIO_PK                                    */
-/*==============================================================*/
-create unique index USUARIO_NEGOCIO_PK on USUARIO_NEGOCIO (
-ID_USUARIO_NEGOCIO
-);
-
-/*==============================================================*/
-/* Index: USUARIO_NEGOCIO_USUARIO_FK                            */
-/*==============================================================*/
-create  index USUARIO_NEGOCIO_USUARIO_FK on USUARIO_NEGOCIO (
-ID_USUARIO
-);
-
-/*==============================================================*/
-/* Index: USUARIO_NEGOCIO_NEGOCIO_FK                            */
-/*==============================================================*/
-create  index USUARIO_NEGOCIO_NEGOCIO_FK on USUARIO_NEGOCIO (
-ID_NEGOCIO
-);
-
-CREATE TABLE password_resets (
-  id_reset SERIAL PRIMARY KEY,
-  id_usuario INT NOT NULL,
-  token_hash VARCHAR(64) NOT NULL,
-  expires_at TIMESTAMP NOT NULL,
-  used BOOLEAN DEFAULT false,
-  created_at TIMESTAMP DEFAULT NOW(),
-  FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-);
-
-
-alter table FOTO
-   add constraint FK_FOTO_SECCION_F_SECCION foreign key (ID_SECCION)
-      references SECCION (ID_SECCION)
-      on delete restrict on update restrict;
-
-alter table HABITACION
-   add constraint FK_HABITACI_CATEGORIA_CATEGORI foreign key (ID_CATEGORIA)
-      references CATEGORIA (ID_CATEGORIA)
-      on delete restrict on update restrict;
-
-alter table HABITACION
-   add constraint FK_HABITACI_NIVEL_HAB_NIVEL foreign key (ID_NIVEL)
-      references NIVEL (ID_NIVEL)
-      on delete restrict on update restrict;
-
-alter table HABITACION_CAMA
-   add constraint FK_HABITACI_CAMA_HABI_CAMA foreign key (ID_CAMA)
-      references CAMA (ID_CAMA)
-      on delete restrict on update restrict;
-
-alter table HABITACION_CAMA
-   add constraint FK_HABITACI_HABITACIO_HABITACI foreign key (ID_HABITACION)
-      references HABITACION (ID_HABITACION)
-      on delete restrict on update restrict;
-
-alter table ICONO
-   add constraint FK_ICONO_SECCION_I_SECCION foreign key (ID_SECCION)
-      references SECCION (ID_SECCION)
-      on delete restrict on update restrict;
-
-alter table IMAGEN
-   add constraint FK_IMAGEN_IMAGEN_HA_HABITACI foreign key (ID_HABITACION)
-      references HABITACION (ID_HABITACION)
-      on delete restrict on update restrict;
-
-alter table PAGO
-   add constraint FK_PAGO_PAGO_RESE_RESERVA foreign key (ID_RESERVA)
-      references RESERVA (ID_RESERVA)
-      on delete restrict on update restrict;
-
-alter table PIE
-   add constraint FK_PIE_SECCION_P_SECCION foreign key (ID_SECCION)
-      references SECCION (ID_SECCION)
-      on delete restrict on update restrict;
-
-alter table RESENA
-   add constraint FK_RESENA_RESENA_HA_HABITACI foreign key (ID_HABITACION)
-      references HABITACION (ID_HABITACION)
-      on delete restrict on update restrict;
-
-alter table RESENA
-   add constraint FK_RESENA_RESENA_US_USUARIO foreign key (ID_USUARIO)
-      references USUARIO (ID_USUARIO)
-      on delete restrict on update restrict;
-
-alter table RESERVA
-   add constraint FK_RESERVA_RESERVA_H_HABITACI foreign key (ID_HABITACION)
-      references HABITACION (ID_HABITACION)
-      on delete restrict on update restrict;
-
-alter table RESERVA
-   add constraint FK_RESERVA_RESERVA_P_PERSONA foreign key (ID_PERSONA)
-      references PERSONA (ID_PERSONA)
-      on delete restrict on update restrict;
-
-alter table RESERVA
-   add constraint FK_RESERVA_RESERVA_R_RESTRICC foreign key (ID_RESTRICCION)
-      references RESTRICCION (ID_RESTRICCION)
-      on delete restrict on update restrict;
-
-alter table RESERVA
-   add constraint FK_RESERVA_RESERVA_U_USUARIO foreign key (ID_USUARIO)
-      references USUARIO (ID_USUARIO)
-      on delete restrict on update restrict;
-
-alter table RESTRICCION
-   add constraint FK_RESTRICC_RESTRICCI_HABITACI foreign key (ID_HABITACION)
-      references HABITACION (ID_HABITACION)
-      on delete restrict on update restrict;
-
-alter table SECCION
-   add constraint FK_SECCION_SECCION_N_NEGOCIO foreign key (ID_NEGOCIO)
-      references NEGOCIO (ID_NEGOCIO)
-      on delete restrict on update restrict;
-
-alter table SERVICIO_HAB
-   add constraint FK_SERVICIO_HAB_SERV__HABITACI foreign key (ID_HABITACION)
-      references HABITACION (ID_HABITACION)
-      on delete restrict on update restrict;
-
-alter table SERVICIO_HAB
-   add constraint FK_SERVICIO_SERVICIO__SERVICIO foreign key (ID_SERVICIO)
-      references SERVICIO (ID_SERVICIO)
-      on delete restrict on update restrict;
-
-alter table USUARIO
-   add constraint FK_USUARIO_USUARIO_P_PERSONA foreign key (ID_PERSONA)
-      references PERSONA (ID_PERSONA)
-      on delete restrict on update restrict;
-
-alter table USUARIO
-   add constraint FK_USUARIO_USUARIO_R_ROL foreign key (ID_ROL)
-      references ROL (ID_ROL)
-      on delete restrict on update restrict;
-
-alter table USUARIO_NEGOCIO
-   add constraint FK_USUARIO__USUARIO_N_NEGOCIO foreign key (ID_NEGOCIO)
-      references NEGOCIO (ID_NEGOCIO)
-      on delete restrict on update restrict;
-
-alter table USUARIO_NEGOCIO
-   add constraint FK_USUARIO__USUARIO_N_USUARIO foreign key (ID_USUARIO)
-      references USUARIO (ID_USUARIO)
-      on delete restrict on update restrict;
+CREATE UNIQUE INDEX "cama_pk" ON "cama" USING BTREE ("id_cama");
 
+CREATE UNIQUE INDEX "categoria_pk" ON "categoria" USING BTREE ("id_categoria");
 
+CREATE INDEX "categoria_habitacion_fk" ON "habitacion" USING BTREE ("id_categoria");
+
+CREATE UNIQUE INDEX "habitacion_pk" ON "habitacion" USING BTREE ("id_habitacion");
+
+CREATE INDEX "nivel_habitacion_fk" ON "habitacion" USING BTREE ("id_nivel");
+
+CREATE INDEX "cama_habitacion_cama_fk" ON "habitacion_cama" USING BTREE ("id_cama");
+
+CREATE INDEX "habitacion_cama_habitacion_fk" ON "habitacion_cama" USING BTREE ("id_habitacion");
+
+CREATE UNIQUE INDEX "habitacion_cama_pk" ON "habitacion_cama" USING BTREE ("id_habitacion_cama");
+
+CREATE INDEX "imagen_habitacion_fk" ON "imagen" USING BTREE ("id_habitacion");
+
+CREATE INDEX "imagen_negocio_fk" ON "imagen" USING BTREE ("id_negocio");
+
+CREATE UNIQUE INDEX "imagen_pk" ON "imagen" USING BTREE ("id_imagen");
+
+CREATE UNIQUE INDEX "negocio_pk" ON "negocio" USING BTREE ("id_negocio");
+
+CREATE UNIQUE INDEX "nivel_pk" ON "nivel" USING BTREE ("id_nivel");
+
+CREATE UNIQUE INDEX "otp_pk" ON "otp" USING BTREE ("telefono_otp");
+
+CREATE UNIQUE INDEX "pago_pk" ON "pago" USING BTREE ("id_pago");
+
+CREATE INDEX "pago_reserva_fk" ON "pago" USING BTREE ("id_reserva");
+
+CREATE UNIQUE INDEX "persona_pk" ON "persona" USING BTREE ("id_persona");
+
+CREATE INDEX "resena_habitacion_fk" ON "resena" USING BTREE ("id_habitacion");
+
+CREATE UNIQUE INDEX "resena_pk" ON "resena" USING BTREE ("id_resena");
+
+CREATE INDEX "resena_usuario_fk" ON "resena" USING BTREE ("id_usuario");
+
+CREATE INDEX "reserva_habitacion_fk" ON "reserva" USING BTREE ("id_habitacion");
+
+CREATE INDEX "reserva_persona_fk" ON "reserva" USING BTREE ("id_persona");
+
+CREATE UNIQUE INDEX "reserva_pk" ON "reserva" USING BTREE ("id_reserva");
+
+CREATE INDEX "reserva_restriccion_fk" ON "reserva" USING BTREE ("id_restriccion");
+
+CREATE INDEX "reserva_usuario_fk" ON "reserva" USING BTREE ("id_usuario");
+
+CREATE INDEX "restriccion_habitacion_fk" ON "restriccion" USING BTREE ("id_habitacion");
+
+CREATE UNIQUE INDEX "restriccion_pk" ON "restriccion" USING BTREE ("id_restriccion");
+
+CREATE UNIQUE INDEX "rol_pk" ON "rol" USING BTREE ("id_rol");
+
+CREATE UNIQUE INDEX "servicio_pk" ON "servicio" USING BTREE ("id_servicio");
+
+CREATE INDEX "hab_serv_hab_fk" ON "servicio_hab" USING BTREE ("id_habitacion");
+
+CREATE UNIQUE INDEX "servicio_habitacion_pk" ON "servicio_hab" USING BTREE ("id_servicio_hab");
+
+CREATE INDEX "servicio_habitacion_servicio_fk" ON "servicio_hab" USING BTREE ("id_servicio");
+
+CREATE INDEX "usuario_persona_fk" ON "usuario" USING BTREE ("id_persona");
+
+CREATE UNIQUE INDEX "usuario_pk" ON "usuario" USING BTREE ("id_usuario");
+
+CREATE INDEX "usuario_rol_fk" ON "usuario" USING BTREE ("id_rol");
+
+CREATE INDEX "usuario_negocio_negocio_fk" ON "usuario_negocio" USING BTREE ("id_negocio");
+
+CREATE UNIQUE INDEX "usuario_negocio_pk" ON "usuario_negocio" USING BTREE ("id_usuario_negocio");
+
+CREATE INDEX "usuario_negocio_usuario_fk" ON "usuario_negocio" USING BTREE ("id_usuario");
+
+ALTER TABLE "foto" ADD CONSTRAINT "fk_foto_seccion" FOREIGN KEY ("id_seccion") REFERENCES "seccion" ("id_seccion") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "habitacion_cama" ADD CONSTRAINT "fk_habitaci_cama_habi_cama" FOREIGN KEY ("id_cama") REFERENCES "cama" ("id_cama") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "habitacion" ADD CONSTRAINT "fk_habitaci_categoria_categori" FOREIGN KEY ("id_categoria") REFERENCES "categoria" ("id_categoria") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "habitacion_cama" ADD CONSTRAINT "fk_habitaci_habitacio_habitaci" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion" ("id_habitacion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "habitacion" ADD CONSTRAINT "fk_habitaci_nivel_hab_nivel" FOREIGN KEY ("id_nivel") REFERENCES "nivel" ("id_nivel") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "icono" ADD CONSTRAINT "fk_icono_seccion" FOREIGN KEY ("id_seccion") REFERENCES "seccion" ("id_seccion") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "imagen" ADD CONSTRAINT "fk_imagen_imagen_ha_habitaci" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion" ("id_habitacion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "imagen" ADD CONSTRAINT "fk_imagen_imagen_ne_negocio" FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "pago" ADD CONSTRAINT "fk_pago_pago_rese_reserva" FOREIGN KEY ("id_reserva") REFERENCES "reserva" ("id_reserva") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "pie" ADD CONSTRAINT "fk_pie_seccion" FOREIGN KEY ("id_seccion") REFERENCES "seccion" ("id_seccion") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "resena" ADD CONSTRAINT "fk_resena_resena_ha_habitaci" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion" ("id_habitacion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "resena" ADD CONSTRAINT "fk_resena_resena_us_usuario" FOREIGN KEY ("id_usuario") REFERENCES "usuario" ("id_usuario") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "reserva" ADD CONSTRAINT "fk_reserva_reserva_h_habitaci" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion" ("id_habitacion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "reserva" ADD CONSTRAINT "fk_reserva_reserva_p_persona" FOREIGN KEY ("id_persona") REFERENCES "persona" ("id_persona") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "reserva" ADD CONSTRAINT "fk_reserva_reserva_r_restricc" FOREIGN KEY ("id_restriccion") REFERENCES "restriccion" ("id_restriccion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "reserva" ADD CONSTRAINT "fk_reserva_reserva_u_usuario" FOREIGN KEY ("id_usuario") REFERENCES "usuario" ("id_usuario") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "restriccion" ADD CONSTRAINT "fk_restricc_restricci_habitaci" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion" ("id_habitacion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "seccion" ADD CONSTRAINT "fk_seccion_negocio" FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "servicio_hab" ADD CONSTRAINT "fk_servicio_hab_serv__habitaci" FOREIGN KEY ("id_habitacion") REFERENCES "habitacion" ("id_habitacion") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "servicio_hab" ADD CONSTRAINT "fk_servicio_servicio__servicio" FOREIGN KEY ("id_servicio") REFERENCES "servicio" ("id_servicio") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "usuario_negocio" ADD CONSTRAINT "fk_usuario__usuario_n_negocio" FOREIGN KEY ("id_negocio") REFERENCES "negocio" ("id_negocio") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "usuario_negocio" ADD CONSTRAINT "fk_usuario__usuario_n_usuario" FOREIGN KEY ("id_usuario") REFERENCES "usuario" ("id_usuario") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "usuario" ADD CONSTRAINT "fk_usuario_usuario_p_persona" FOREIGN KEY ("id_persona") REFERENCES "persona" ("id_persona") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "usuario" ADD CONSTRAINT "fk_usuario_usuario_r_rol" FOREIGN KEY ("id_rol") REFERENCES "rol" ("id_rol") ON DELETE RESTRICT ON UPDATE RESTRICT;
+
+ALTER TABLE "password_resets" ADD CONSTRAINT "password_resets_id_usuario_fkey" FOREIGN KEY ("id_usuario") REFERENCES "usuario" ("id_usuario");
 
 
 
