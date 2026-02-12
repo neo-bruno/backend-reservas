@@ -18,7 +18,7 @@ const sendRecoveryEmail = async (email, token) => {
   const link = `${process.env.FRONT_URL}/reset-password?token=${token}`
 
   await transporter.sendMail({
-    from: '"Soporte" <no-reply@tusitio.com>',
+    from: '"Hotel Felipez - (RECUPERAR CONTRASEÑA)" <no-reply@tusitio.com>',
     to: email,
     subject: 'Recuperación de contraseña',
     html: `

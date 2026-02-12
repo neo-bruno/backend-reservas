@@ -54,12 +54,11 @@ const modifyUser = async (req, res) => {
     } = req.body
 
     let hashedPassword = null
-
+    
     // 🔐 SOLO si viene contraseña
     if (contrasena_usuario) {
       hashedPassword = await encrypt(contrasena_usuario)
-    }
-
+    }    
     const user = await UserModel.modifyUserModel({
       id_usuario,
       id_rol,
@@ -67,7 +66,7 @@ const modifyUser = async (req, res) => {
       nombre_usuario,
       telefono_usuario,
       codigo_pais_usuario,
-      hashedPassword,
+      contrasena_usuario: hashedPassword,
       verificado_usuario,
       email_usuario,
       verificado_phone_usuario,

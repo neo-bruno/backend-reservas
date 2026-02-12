@@ -32,9 +32,7 @@ module.exports = {
 
   // restaurar la contreseña
   async resetPassword(req, res) {
-    try {
-      console.log('BODY RECIBIDO:', req.body)
-
+    try {      
       const { token, password } = req.body
       await authService.resetPassword(token, password)
 

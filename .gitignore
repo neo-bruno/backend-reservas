@@ -31,3 +31,5 @@ build/
 
 # Firebase credentials
 config/serviceAccountKey.json
+
+/img

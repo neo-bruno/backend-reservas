@@ -112,11 +112,16 @@ const findByCellphone = async (telefono_usuario) => {
         SELECT 
           u.id_usuario,
           u.id_rol,
+          u.id_persona,
           u.nombre_usuario,            
           u.telefono_usuario,
           u.codigo_pais_usuario,
           u.contrasena_usuario,
           u.verificado_usuario,
+          u.email_usuario,
+          u.verificado_phone_usuario,
+          u.verificado_email_usuario,
+          u.metodo_registro_usuario,
 
           json_build_object(
               'id_rol', r.id_rol,
