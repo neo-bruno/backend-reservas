@@ -5,7 +5,11 @@ const app = express()
 const db = require('./config/bd');
 const PORT = process.env.PORT || 3000
 
-app.use(cors())
+app.use(cors({
+  origin: process.env.FRONT_URL,
+  credentials: true
+}))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
