@@ -147,7 +147,9 @@ const modifyRoomModel = async (habitacion) => {
       estado_habitacion
     } = habitacion
 
+    // =============================
     // 1️⃣ UPDATE HABITACION
+    // =============================
     await client.query(
       `
       UPDATE habitacion
@@ -177,81 +179,166 @@ const modifyRoomModel = async (habitacion) => {
       ]
     )
 
-    // 2️⃣ DELETE RELACIONES
-    await client.query(
-      `DELETE FROM imagen WHERE id_habitacion = $1`,
+    // ======================================================
+    // 2️⃣ SYNC IMAGENES  (INSERT / UPDATE / DELETE DIFERENCIAL)
+    // ======================================================
+
+    const { rows: imagenesDB } = await client.query(
+      `SELECT id_imagen FROM imagen WHERE id_habitacion=$1`,
       [id_habitacion]
     )
 
-    await client.query(
-      `DELETE FROM servicio_hab WHERE id_habitacion = $1`,
-      [id_habitacion]
-    )
+    const idsDB = imagenesDB.map(i => i.id_imagen)
 
-    await client.query(
-      `DELETE FROM habitacion_cama WHERE id_habitacion = $1`,
-      [id_habitacion]
-    )
+    const imagenes = habitacion.imagenes || []
+    const nuevas = imagenes.filter(i => !i.id_imagen)
+    const existentes = imagenes.filter(i => i.id_imagen)
 
-    // 3️⃣ INSERT IMÁGENES
-    if (habitacion.imagenes?.length) {
-      for (const img of habitacion.imagenes) {
-        await client.query(
-          `
-          INSERT INTO imagen (
-            id_habitacion,
-            id_negocio,
-            url_imagen,
-            nombre_imagen
-          )
-          VALUES ($1,$2,$3,$4)
-          `,
-          [
-            id_habitacion,
-            img.id_negocio,
-            img.url_imagen,
-            img.nombre_imagen || null
-          ]
-        )
-      }
+    const idsFrontend = existentes.map(i => i.id_imagen)
+
+    // DELETE
+    const eliminar = idsDB.filter(id => !idsFrontend.includes(id))
+    for (const id of eliminar) {
+      await client.query(`DELETE FROM imagen WHERE id_imagen=$1`, [id])
     }
 
-    // 4️⃣ INSERT SERVICIOS
-    if (habitacion.servicios?.length) {
-      for (const servicio of habitacion.servicios) {
-        await client.query(
-          `
-          INSERT INTO servicio_hab (id_habitacion, id_servicio)
-          VALUES ($1, $2)
-          `,
-          [id_habitacion, servicio.id_servicio]
-        )
-      }
+    // UPDATE
+    for (const img of existentes) {
+      await client.query(
+        `
+        UPDATE imagen SET
+          url_imagen=$1,
+          nombre_imagen=$2,
+          id_negocio=$3
+        WHERE id_imagen=$4
+        `,
+        [
+          img.url_imagen,
+          img.nombre_imagen || null,
+          img.id_negocio || habitacion.id_negocio || 1,
+          img.id_imagen
+        ]
+      )
     }
 
-    // 5️⃣ INSERT HABITACION_CAMA
-    if (habitacion.habitacion_camas?.length) {
-      for (const hc of habitacion.habitacion_camas) {
-        await client.query(
-          `
-          INSERT INTO habitacion_cama (
-            id_habitacion,
-            id_cama,
-            cantidad_hab_cama,
-            costo_hab_cama,
-            total_hab_cama
-          )
-          VALUES ($1,$2,$3,$4,$5)
-          `,
-          [
-            id_habitacion,
-            hc.cama.id_cama,
-            hc.cantidad_hab_cama,
-            hc.costo_hab_cama,
-            hc.total_hab_cama
-          ]
+    // INSERT
+    for (const img of nuevas) {
+      if (!img.url_imagen) continue
+
+      await client.query(
+        `
+        INSERT INTO imagen (
+          id_habitacion,
+          id_negocio,
+          url_imagen,
+          nombre_imagen
         )
-      }
+        VALUES ($1,$2,$3,$4)
+        `,
+        [
+          id_habitacion,
+          img.id_negocio || habitacion.id_negocio || 1,
+          img.url_imagen,
+          img.nombre_imagen || null
+        ]
+      )
+    }
+
+    // ======================================
+    // 3️⃣ SYNC SERVICIOS
+    // ======================================
+
+    const { rows: serviciosDB } = await client.query(
+      `SELECT id_servicio FROM servicio_hab WHERE id_habitacion=$1`,
+      [id_habitacion]
+    )
+
+    const idsServDB = serviciosDB.map(s => s.id_servicio)
+    const serviciosFront = (habitacion.servicios || []).map(s => s.id_servicio)
+
+    // DELETE
+    for (const id of idsServDB.filter(id => !serviciosFront.includes(id))) {
+      await client.query(
+        `DELETE FROM servicio_hab WHERE id_habitacion=$1 AND id_servicio=$2`,
+        [id_habitacion, id]
+      )
+    }
+
+    // INSERT
+    for (const id of serviciosFront.filter(id => !idsServDB.includes(id))) {
+      await client.query(
+        `INSERT INTO servicio_hab (id_habitacion,id_servicio) VALUES ($1,$2)`,
+        [id_habitacion, id]
+      )
+    }
+
+    // ======================================
+    // 4️⃣ SYNC HABITACION_CAMA
+    // ======================================
+
+    const { rows: camasDB } = await client.query(
+      `SELECT id_habitacion_cama FROM habitacion_cama WHERE id_habitacion=$1`,
+      [id_habitacion]
+    )
+
+    const idsCamasDB = camasDB.map(c => c.id_habitacion_cama)
+
+    const camasFront = habitacion.habitacion_camas || []
+    const nuevasCamas = camasFront.filter(c => !c.id_habitacion_cama)
+    const existentesCamas = camasFront.filter(c => c.id_habitacion_cama)
+
+    const idsFront = existentesCamas.map(c => c.id_habitacion_cama)
+
+    // DELETE
+    for (const id of idsCamasDB.filter(id => !idsFront.includes(id))) {
+      await client.query(
+        `DELETE FROM habitacion_cama WHERE id_habitacion_cama=$1`,
+        [id]
+      )
+    }
+
+    // UPDATE
+    for (const hc of existentesCamas) {
+      await client.query(
+        `
+        UPDATE habitacion_cama SET
+          id_cama=$1,
+          cantidad_hab_cama=$2,
+          costo_hab_cama=$3,
+          total_hab_cama=$4
+        WHERE id_habitacion_cama=$5
+        `,
+        [
+          hc.cama.id_cama,
+          hc.cantidad_hab_cama,
+          hc.costo_hab_cama,
+          hc.total_hab_cama,
+          hc.id_habitacion_cama
+        ]
+      )
+    }
+
+    // INSERT
+    for (const hc of nuevasCamas) {
+      await client.query(
+        `
+        INSERT INTO habitacion_cama (
+          id_habitacion,
+          id_cama,
+          cantidad_hab_cama,
+          costo_hab_cama,
+          total_hab_cama
+        )
+        VALUES ($1,$2,$3,$4,$5)
+        `,
+        [
+          id_habitacion,
+          hc.cama.id_cama,
+          hc.cantidad_hab_cama,
+          hc.costo_hab_cama,
+          hc.total_hab_cama
+        ]
+      )
     }
 
     await client.query('COMMIT')
@@ -268,6 +355,7 @@ const modifyRoomModel = async (habitacion) => {
     client.release()
   }
 }
+
 
 const modifyOnlyRoomModel = async (habitacion) => {
   const client = await db.connect()

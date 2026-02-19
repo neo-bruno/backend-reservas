@@ -14,6 +14,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use('/api/1.0', require('./app/routes'))
+// app.use('/public', express.static(`img`))
 app.use('/public', express.static(`${__dirname}/img`))
 
 // Manejador global de errores (antes del listen)

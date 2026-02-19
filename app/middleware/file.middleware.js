@@ -64,7 +64,7 @@ const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 100 * 1024 * 1024 // 100MB
+    fileSize: 1000 * 1024 * 1024 // 100MB
   }
 }).single('file')
 
@@ -86,6 +86,7 @@ const saveFileImage = async (req, res) => {
       }
       const { filename } = req.file
       const urlFile = `${DIR_HOST}:${PORT}/public/${filename}`
+      // const urlFile = `${DIR_HOST}/public/${filename}`
       return res.status(200).send(urlFile)
     })
 

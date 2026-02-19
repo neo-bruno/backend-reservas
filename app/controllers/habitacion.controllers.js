@@ -21,7 +21,7 @@ const saveRoom = async (req, res) => {
 
 const modifyRoom = async (req, res) => {
   try {
-    const habitacion = req.body
+    const habitacion = req.body    
     try {
       const RoomModify = await HabitacionModel.modifyRoomModel(habitacion)
       if(!RoomModify){
