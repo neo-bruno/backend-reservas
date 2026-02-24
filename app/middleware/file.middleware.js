@@ -85,8 +85,8 @@ const saveFileImage = async (req, res) => {
         })
       }
       const { filename } = req.file
-      const urlFile = `${DIR_HOST}:${PORT}/public/${filename}`
-      // const urlFile = `${DIR_HOST}/public/${filename}`
+      // const urlFile = `${DIR_HOST}:${PORT}/public/${filename}`
+      const urlFile = `${DIR_HOST}/public/${filename}`
       return res.status(200).send(urlFile)
     })
 
