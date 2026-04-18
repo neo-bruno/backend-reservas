@@ -33,7 +33,18 @@ const getRestrictionsModel = async (id_habitacion) => {
   try {
     const query = {
       text: `
-        select * from restriccion where id_habitacion = $1 and estado_restriccion = 1
+        SELECT 
+          id_restriccion,
+          id_habitacion,  
+          TO_CHAR(fecha_inicial_restriccion, 'YYYY-MM-DD') AS fecha_inicial_restriccion,
+          hora_inicial_restriccion,
+          TO_CHAR(fecha_final_restriccion, 'YYYY-MM-DD') AS fecha_final_restriccion,
+          hora_final_restriccion,
+          motivo_restriccion,
+          estado_restriccion
+        FROM restriccion
+        WHERE id_habitacion = $1
+          AND estado_restriccion = 1;
       `,
       values: [id_habitacion]
     }    

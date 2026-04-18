@@ -98,16 +98,14 @@ const saveRoomModel = async (habitacion) => {
         await client.query(
           `
           INSERT INTO imagen (
-            id_habitacion,
-            id_negocio,
+            id_habitacion,            
             url_imagen,
             nombre_imagen
           )
-          VALUES ($1,$2,$3,$4)
+          VALUES ($1,$2,$3)
           `,
           [
             id_habitacion,
-            img.id_negocio,
             img.url_imagen,
             img.nombre_imagen || null
           ]
@@ -208,14 +206,12 @@ const modifyRoomModel = async (habitacion) => {
         `
         UPDATE imagen SET
           url_imagen=$1,
-          nombre_imagen=$2,
-          id_negocio=$3
-        WHERE id_imagen=$4
+          nombre_imagen=$2          
+        WHERE id_imagen=$3
         `,
         [
           img.url_imagen,
           img.nombre_imagen || null,
-          img.id_negocio || habitacion.id_negocio || 1,
           img.id_imagen
         ]
       )
@@ -228,16 +224,14 @@ const modifyRoomModel = async (habitacion) => {
       await client.query(
         `
         INSERT INTO imagen (
-          id_habitacion,
-          id_negocio,
+          id_habitacion,          
           url_imagen,
           nombre_imagen
         )
-        VALUES ($1,$2,$3,$4)
+        VALUES ($1,$2,$3)
         `,
         [
           id_habitacion,
-          img.id_negocio || habitacion.id_negocio || 1,
           img.url_imagen,
           img.nombre_imagen || null
         ]
@@ -512,58 +506,95 @@ const getRoomsModel = async () => {
             WHERE sh.id_habitacion = h.id_habitacion
           ) AS servicios,
 
-          -- 🔥 🔹 RESTRICCIONES (con o sin reserva)
-          (
-            SELECT COALESCE(
-              json_agg(
-                json_build_object(
-                  'id_restriccion', r.id_restriccion,
-                  'id_habitacion', r.id_habitacion,
-                  'fecha_inicial_restriccion', r.fecha_inicial_restriccion,
-                  'hora_inicial_restriccion', r.hora_inicial_restriccion,
-                  'fecha_final_restriccion', r.fecha_final_restriccion,
-                  'hora_final_restriccion', r.hora_final_restriccion,
-                  'motivo_restriccion', r.motivo_restriccion,
-                  'estado_restriccion', r.estado_restriccion,
+          -- 🔥 🔹 RESTRICCIONES (con reserva, pago y persona)
+(
+  SELECT COALESCE(
+    json_agg(
+      json_build_object(
+        'id_restriccion', r.id_restriccion,
+        'id_habitacion', r.id_habitacion,
+        'fecha_inicial_restriccion', r.fecha_inicial_restriccion,
+        'hora_inicial_restriccion', r.hora_inicial_restriccion,
+        'fecha_final_restriccion', r.fecha_final_restriccion,
+        'hora_final_restriccion', r.hora_final_restriccion,
+        'motivo_restriccion', r.motivo_restriccion,
+        'estado_restriccion', r.estado_restriccion,
 
-                  'reserva', CASE
-                    WHEN res.id_reserva IS NULL THEN NULL
-                    ELSE json_build_object(
-                      'id_reserva', res.id_reserva,
-                      'id_usuario', res.id_usuario,
-                      'id_persona', res.id_persona,
-                      'id_restriccion', res.id_restriccion,
-                      'codigo_reserva', res.codigo_reserva,
-                      'fecha_reserva', res.fecha_reserva,
-                      'check_in_reserva', res.check_in_reserva,
-                      'check_out_reserva', res.check_out_reserva,
-                      'hora_llegada_reserva', res.hora_llegada_reserva,
-                      'total_estadia_reserva', res.total_estadia_reserva,
-                      'descuento_reserva', res.descuento_reserva,
-                      'servicio_reserva', res.servicio_reserva,
-                      'monto_total_reserva', res.monto_total_reserva,
-                      'estado_reserva', res.estado_reserva,
-                      'observacion_reserva', res.observacion_reserva
-                    )
-                  END
-                )
-                ORDER BY r.fecha_inicial_restriccion
-              ),
-              '[]'::json
-            )
-            FROM restriccion r
-            LEFT JOIN reserva res 
-              ON res.id_restriccion = r.id_restriccion
-            WHERE r.id_habitacion = h.id_habitacion
-              AND r.estado_restriccion = 1
-          ) AS restricciones
+        'reserva',
+        CASE
+          WHEN res.id_reserva IS NULL THEN NULL
+          ELSE json_build_object(
+            'id_reserva', res.id_reserva,
+            'id_usuario', res.id_usuario,
+            'id_persona', res.id_persona,
+            'id_restriccion', res.id_restriccion,
+            'codigo_reserva', res.codigo_reserva,
+            'fecha_reserva', res.fecha_reserva,
+            'check_in_reserva', res.check_in_reserva,
+            'check_out_reserva', res.check_out_reserva,
+            'hora_llegada_reserva', res.hora_llegada_reserva,
+            'total_estadia_reserva', res.total_estadia_reserva,
+            'descuento_reserva', res.descuento_reserva,
+            'servicio_reserva', res.servicio_reserva,
+            'monto_total_reserva', res.monto_total_reserva,
+            'estado_reserva', res.estado_reserva,
+            'observacion_reserva', res.observacion_reserva,
+            'precio_reserva', res.precio_reserva,
 
+            -- 🔹 PERSONA QUE HIZO LA RESERVA
+            'persona',
+            CASE
+              WHEN per.id_persona IS NULL THEN NULL
+              ELSE json_build_object(
+                'id_persona', per.id_persona,
+                'nombre_persona', per.nombre_persona,
+                'documento_persona', per.documento_persona,
+                'expedicion_persona', per.expedicion_persona,
+                'fecha_nacimiento_persona', per.fecha_nacimiento_persona,
+                'nit_persona', per.nit_persona,
+                'razon_social_persona', per.razon_social_persona,
+                'telefono_persona', per.telefono_persona,
+                'tipo_persona', per.tipo_persona
+              )
+            END,
+
+            -- 🔹 PAGO
+            'pago',
+            CASE
+              WHEN p.id_pago IS NULL THEN NULL
+              ELSE json_build_object(
+                'id_pago', p.id_pago,
+                'monto_pago', p.monto_pago,
+                'tipo_pago', p.tipo_pago,
+                'metodo_pago', p.metodo_pago,
+                'comision_pago', p.comision_pago,
+                'fecha_pago', p.fecha_pago,
+                'estado_pago', p.estado_pago,
+                'url_pago', p.url_pago
+              )
+            END
+          )
+        END
+      )
+      ORDER BY r.fecha_inicial_restriccion
+    ),
+    '[]'::json
+  )
+  FROM restriccion r
+  LEFT JOIN reserva res
+    ON res.id_restriccion = r.id_restriccion
+  LEFT JOIN persona per
+    ON per.id_persona = res.id_persona
+  LEFT JOIN pago p
+    ON p.id_reserva = res.id_reserva
+  WHERE r.id_habitacion = h.id_habitacion
+    AND r.estado_restriccion = 1
+) AS restricciones
         FROM habitacion h
         JOIN categoria c ON c.id_categoria = h.id_categoria
         JOIN nivel n ON n.id_nivel = h.id_nivel
 
         ORDER BY h.id_habitacion;
-
       `,
     }
 
@@ -614,8 +645,7 @@ const getRoomByIdModel = async (id_habitacion) => {
             json_agg(
               json_build_object(
                 'id_imagen', i.id_imagen,
-                'id_habitacion', i.id_habitacion,
-                'id_negocio', i.id_negocio,
+                'id_habitacion', i.id_habitacion,                
                 'url_imagen', i.url_imagen,
                 'nombre_imagen', i.nombre_imagen
               )
@@ -713,6 +743,5 @@ module.exports = {
   modifyRoomModel,
   modifyOnlyRoomModel,
   getRoomsModel,
-  getRoomByIdModel,
-  getRoomsModel
+  getRoomByIdModel,  
 }

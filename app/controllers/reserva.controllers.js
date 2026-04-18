@@ -1,7 +1,28 @@
 const { httpError } = require('../helpers/error.helper')
 const BookingModel = require('../models/reserva.models')
-const { sendWhatsApp } = require('../services/whatsapp.service')
 
+const saveBookingManual = async (req, res) => {
+  try {
+    const reserva = req.body
+
+    const Reserva = await BookingModel.saveBookingManualModel(reserva)    
+    
+    if (!Reserva) {
+      return res.status(404).json({ message: 'No se encontró la reserva' })
+    }
+    return res.status(200).json({
+      message: 'Se ha guardado correctamente la reserva',
+      data: Reserva
+    })
+
+  } catch (error) {
+    console.error(error)
+    return res.status(500).json({
+      message: 'Error en guardar los datos de la reserva',
+      error: error.message
+    })
+  }
+}
 const saveBooking = async (req, res) => {
   try {
     const reserva = req.body
@@ -11,38 +32,6 @@ const saveBooking = async (req, res) => {
     if (!Reserva) {
       return res.status(404).json({ message: 'No se encontró la reserva' })
     }
-
-    // 🔔 MENSAJE AL CLIENTE
-//     if (reserva.telefono_cliente) {
-//       const mensajeCliente = `
-// Hola 👋
-// Tu reserva fue registrada correctamente ✅
-
-// 📌 Código: ${Reserva.codigo_reserva}
-// 📅 Check-in: ${reserva.check_in_reserva}
-// 📅 Check-out: ${reserva.check_out_reserva}
-
-// Estado: Pendiente de confirmación
-// Gracias por confiar en nosotros 🙌
-//       `.trim()
-
-//       sendWhatsApp(reserva.telefono_cliente, mensajeCliente)
-//         .catch(err => console.error('Error WhatsApp cliente:', err.message))
-//     }
-
-//     // 🔔 MENSAJE AL ADMIN
-//     const mensajeAdmin = `
-// 📢 NUEVA RESERVA
-
-// Código: ${Reserva.codigo_reserva}
-// Habitación: ${reserva.id_habitacion}
-// Check-in: ${reserva.check_in_reserva}
-// Check-out: ${reserva.check_out_reserva}
-//     `.trim()
-
-//     sendWhatsApp(process.env.ADMIN_PHONE, mensajeAdmin)
-//       .catch(err => console.error('Error WhatsApp admin:', err.message))
-
     return res.status(200).json({
       message: 'Se ha guardado correctamente la reserva',
       data: Reserva
@@ -126,6 +115,7 @@ const modifyBooking = async (req, res) => {
 
 module.exports = {
   saveBooking,
+  saveBookingManual,
   getReservations,
   modifyBooking,
   reservasActivasInactivas,

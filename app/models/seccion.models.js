@@ -51,21 +51,7 @@ const getSectionByTypeModel = async (tipo) => {
                   WHERE i.id_seccion = s.id_seccion                  
               ),
               '[]'::json
-          ) AS iconos,
-
-          /* Pie como objeto */
-          (
-              SELECT json_build_object(
-                  'id_pie', p.id_pie,
-                  'id_seccion', p.id_seccion,
-                  'nombre_pie', p.nombre_pie,
-                  'url_pie', p.url_pie,
-                  'mapa_pie', p.mapa_pie
-              )
-              FROM pie p
-              WHERE p.id_seccion = s.id_seccion
-              LIMIT 1
-          ) AS pie
+          ) AS iconos
 
       FROM seccion s
       WHERE s.tipo_seccion = $1; -- 👈 aquí cambias el tipo      

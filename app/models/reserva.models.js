@@ -14,12 +14,12 @@ function generarCodigoReserva() {
 }
 
 
-const saveBookingModel = async (reserva) => {
+const saveBookingManualModel = async (reserva) => {
   const client = await bd.connect()
   try {
     await client.query('BEGIN')
 
-    const { id_usuario, id_persona, id_habitacion, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, restriccion } = reserva
+    const { id_usuario, id_persona, id_habitacion, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, precio_reserva, restriccion, pago } = reserva
 
     const restrictionResult = await client.query(
       `
@@ -50,10 +50,75 @@ const saveBookingModel = async (reserva) => {
     const BookingResult = await client.query(
       `      
       INSERT INTO public.reserva(
-      id_usuario, id_persona, id_habitacion, id_restriccion, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva)
-      VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *;
+      id_usuario, id_persona, id_habitacion, id_restriccion, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, precio_reserva)
+      VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *;
       `,
-      [id_usuario, id_persona, id_habitacion, id_restriccion, generarCodigoReserva(), check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva]
+      [id_usuario, id_persona, id_habitacion, id_restriccion, generarCodigoReserva(), check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, precio_reserva]
+    )
+
+    const id_reserva = BookingResult.rows[0].id_reserva
+
+    if(pago.monto_pago > 0){
+      await client.query(
+        `
+        INSERT INTO public.pago(
+        id_reserva, monto_pago, tipo_pago, metodo_pago, comision_pago, fecha_pago, estado_pago, url_pago)
+        VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7) RETURNING *;
+        `,
+        [id_reserva, pago.monto_pago, pago.tipo_pago, pago.metodo_pago, pago.comision_pago, pago.estado_pago, pago.url_pago]
+      )
+    }
+
+    await client.query('COMMIT')
+    return BookingResult.rows[0]
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+}
+
+const saveBookingModel = async (reserva) => {
+  const client = await bd.connect()
+  try {
+    await client.query('BEGIN')
+
+    const { id_usuario, id_persona, id_habitacion, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, precio_reserva, restriccion } = reserva
+
+    const restrictionResult = await client.query(
+      `
+      INSERT INTO public.restriccion(
+      id_habitacion, 
+      fecha_inicial_restriccion, 
+      hora_inicial_restriccion, 
+      fecha_final_restriccion, 
+      hora_final_restriccion, 
+      motivo_restriccion, 
+      estado_restriccion)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING id_restriccion
+    `,
+      [
+        restriccion.id_habitacion,
+        restriccion.fecha_inicial_restriccion,
+        restriccion.hora_inicial_restriccion,
+        restriccion.fecha_final_restriccion,
+        restriccion.hora_final_restriccion,
+        restriccion.motivo_restriccion,
+        restriccion.estado_restriccion
+      ]
+    )
+
+    const id_restriccion = restrictionResult.rows[0].id_restriccion
+
+    const BookingResult = await client.query(
+      `      
+      INSERT INTO public.reserva(
+      id_usuario, id_persona, id_habitacion, id_restriccion, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, precio_reserva)
+      VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING *;
+      `,
+      [id_usuario, id_persona, id_habitacion, id_restriccion, generarCodigoReserva(), check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, precio_reserva]
     )
     await client.query('COMMIT')
     return BookingResult.rows[0]
@@ -68,92 +133,48 @@ const saveBookingModel = async (reserva) => {
 const modifyBookingModel = async (reserva) => {
   const client = await bd.connect()
   try {
-    await client.query('BEGIN')
+    await client.query('BEGIN')    
 
-    const { id_reserva, codigo_reserva, fecha_reserva, check_in_reserva, check_out_reserva, hora_llegada_reserva, total_estadia_reserva, descuento_reserva, servicio_reserva, monto_total_reserva, estado_reserva, observacion_reserva, condicion_reserva, habitacion, persona, usuario, restriccion } = reserva
+    const { id_restriccion, estado_restriccion, id_reserva, id_pago, observacion_reserva, condicion_reserva, estado_reserva, estado_pago, existe_pago } = reserva
 
-    const restrictionResult = await client.query(
+    await client.query(
       `
         UPDATE public.restriccion
-        SET
-          id_habitacion = $2,
-          fecha_inicial_restriccion = $3,
-          hora_inicial_restriccion = $4,
-          fecha_final_restriccion = $5,
-          hora_final_restriccion = $6,
-          motivo_restriccion = $7,
-          estado_restriccion = $8
+        SET          
+          estado_restriccion = $2
         WHERE id_restriccion = $1
         RETURNING *;
         `,
-      [
-        restriccion.id_restriccion,
-        habitacion.id_habitacion,
-        restriccion.fecha_inicial_restriccion,
-        restriccion.hora_inicial_restriccion,
-        restriccion.fecha_final_restriccion,
-        restriccion.hora_final_restriccion,
-        restriccion.motivo_restriccion,
-        restriccion.estado_restriccion
-      ]
+      [ id_restriccion, estado_restriccion ]
     )
-
-    if (restrictionResult.rowCount === 0) {
-      throw new Error('No se pudo actualizar la restricción')
-    }
-
+    
     const bookingResult = await client.query(
       `
         UPDATE public.reserva
-        SET
-          id_usuario = $2,
-          id_persona = $3,
-          id_habitacion = $4,
-          id_restriccion = $5,
-          codigo_reserva = $6,
-          fecha_reserva = $7,
-          check_in_reserva = $8,
-          check_out_reserva = $9,
-          hora_llegada_reserva = $10,
-          total_estadia_reserva = $11,
-          descuento_reserva = $12,
-          servicio_reserva = $13,
-          monto_total_reserva = $14,
-          estado_reserva = $15,
-          observacion_reserva = $16,
-          condicion_reserva = $17
+        SET 
+          estado_reserva = $2,   
+          observacion_reserva = $3,                 
+          condicion_reserva = $4          
         WHERE id_reserva = $1
         RETURNING *;
-  `,
-      [
-        id_reserva,
-        usuario.id_usuario,
-        persona.id_persona,
-        habitacion.id_habitacion,
-        restriccion.id_restriccion,
-        codigo_reserva,
-        fecha_reserva,
-        check_in_reserva,
-        check_out_reserva,
-        hora_llegada_reserva,
-        total_estadia_reserva,
-        descuento_reserva,
-        servicio_reserva,
-        monto_total_reserva,
-        estado_reserva,
-        observacion_reserva,
-        condicion_reserva
-      ]
+      `,
+      [ id_reserva, estado_reserva, observacion_reserva, condicion_reserva ]
     )
 
-    if (bookingResult.rowCount === 0) {
-      throw new Error('No se pudo actualizar la reserva')
+    if (existe_pago) {
+      await client.query(
+      `
+        UPDATE public.pago
+        SET estado_pago=$2
+        WHERE id_pago=$1
+      `,
+      [ id_pago, estado_pago ]
+      ) 
     }
 
     await client.query('COMMIT')
     return {
-      reserva: bookingResult.rows[0],
-      restriccion: restrictionResult.rows[0]
+      reserva: bookingResult.rows[0]
     }
   } catch (error) {
     await client.query('ROLLBACK')
@@ -212,6 +233,7 @@ const getReservationsTypeOne = async (id_usuario) => {
         r.estado_reserva,
         r.observacion_reserva,
         r.condicion_reserva,
+        r.precio_reserva,
 
         /* ================= PAGOS ================= */
         jsonb_build_object(
@@ -373,6 +395,7 @@ const getReservationsTypeDos = async (id_usuario) => {
         r.estado_reserva,
         r.observacion_reserva,
         r.condicion_reserva,
+        r.precio_reserva,
 
         /* ================= PAGOS ================= */
         jsonb_build_object(
@@ -535,6 +558,7 @@ const getReservationsTypeTres = async (id_usuario) => {
         r.estado_reserva,
         r.observacion_reserva,
         r.condicion_reserva,
+        r.precio_reserva,
 
         /* ================= PAGOS ================= */
         jsonb_build_object(
@@ -709,6 +733,7 @@ const getReservationsIdUserModel = async (id_usuario) => {
         r.estado_reserva,
         r.observacion_reserva,
         r.condicion_reserva,
+        r.precio_reserva,
 		
         /* ================= PAGO ================= */
         -- 💳 PAGOS
@@ -769,8 +794,7 @@ const getReservationsIdUserModel = async (id_usuario) => {
                   json_agg(
                     json_build_object(
                       'id_imagen', i.id_imagen,
-                      'id_habitacion', i.id_habitacion,
-                      'id_negocio', i.id_negocio,
+                      'id_habitacion', i.id_habitacion,                      
                       'url_imagen', i.url_imagen,
                       'nombre_imagen', i.nombre_imagen
                     )
@@ -868,6 +892,7 @@ const getReservationsPastByUserModel = async (id_usuario) => {
         r.estado_reserva,
         r.observacion_reserva,
         r.condicion_reserva,
+        r.precio_reserva,
 
         /* ================= PAGO ================= */
         -- 💳 PAGOS
@@ -928,8 +953,7 @@ const getReservationsPastByUserModel = async (id_usuario) => {
               json_agg(
                 json_build_object(
                   'id_imagen', i.id_imagen,
-                  'id_habitacion', i.id_habitacion,
-                  'id_negocio', i.id_negocio,
+                  'id_habitacion', i.id_habitacion,                  
                   'url_imagen', i.url_imagen,
                   'nombre_imagen', i.nombre_imagen
                 )
@@ -1031,6 +1055,7 @@ const getReservationsPastByUserModel = async (id_usuario) => {
 
 module.exports = {
   saveBookingModel,
+  saveBookingManualModel,
   getAllBookingModel,
   modifyBookingModel,
   reservasActivasInactivasModel,

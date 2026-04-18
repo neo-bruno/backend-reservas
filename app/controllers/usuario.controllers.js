@@ -94,17 +94,17 @@ const register = async (req, res) => {
     let usuario = req.body
 
     if (!usuario.codigo_pais_usuario || !usuario.nombre_usuario || !usuario.contrasena_usuario || !usuario.telefono_usuario) {
-      return res.status(400).json({ estado: false, mensaje: 'Uno de los Campos esta Vacio: codigo_pais_usuario, nombre_usuario, contrasena_usuario, telefono_usuario' })
+      return res.status(400).json({ estado: false, error: 'Uno de los Campos esta Vacio: codigo_pais_usuario, nombre_usuario, contrasena_usuario, telefono_usuario' })
     }
 
     const user = await UserModel.findByCellphone(usuario.telefono_usuario)
     if (user.id_usuario > 0) {
-      return res.status(409).json({ estado: false, mensaje: 'El numero Celular ya Existe!' })
+      return res.status(409).json({ estado: false, error: 'El numero Celular ya Existe!' })
     }
 
     const userEmail = await UserModel.findEmailUnique(usuario.email_usuario)
     if(userEmail.id_usuario > 0){
-      return res.status(409).json({ estado: false, mensaje: 'El correo electronico ya Existe!' })
+      return res.status(409).json({ estado: false, error: 'El correo electronico ya Existe!' })
     }
 
     const hashedPassword = await encrypt(usuario.contrasena_usuario)
